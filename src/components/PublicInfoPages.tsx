@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search,
-  FileCheck2,
-  Building2,
-  Phone,
-  Mail,
-  MapPin,
-  CheckCircle2,
   HelpCircle,
-  ShieldCheck,
-  FileText,
 } from 'lucide-react';
 import type { PublicPageTab, VerificationApplication } from '../types';
 import { StorageService } from '../services/storageService';
@@ -17,14 +9,10 @@ import { GATC_DIRECTORY } from '../services/mockData';
 
 interface PublicInfoPagesProps {
   activeTab: PublicPageTab;
-  onApplyClick: () => void;
-  onVerifyCertClick: () => void;
 }
 
 export const PublicInfoPages: React.FC<PublicInfoPagesProps> = ({
   activeTab,
-  onApplyClick,
-  onVerifyCertClick,
 }) => {
   // Track Application State
   const [trackQuery, setTrackQuery] = useState('APP-2026-1403');

@@ -122,6 +122,18 @@ export const GovtHeader: React.FC<GovtHeaderProps> = ({
             </button>
           </div>
 
+          <button
+            onClick={onToggleHighContrast}
+            className={`hidden sm:flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold transition-colors cursor-pointer ${
+              highContrast ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Toggle high contrast"
+            aria-pressed={highContrast}
+          >
+            <SlidersHorizontal className="w-3 h-3" />
+            <span>Contrast</span>
+          </button>
+
           <span className="text-slate-700 hidden sm:inline">|</span>
 
           {/* Language Switcher */}

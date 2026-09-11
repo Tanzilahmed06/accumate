@@ -73,6 +73,15 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
         inspectionDate: new Date().toISOString().split('T')[0],
         locationGeo: geoTagged,
         locationAddress: instrument?.locationAddress || 'Okhla Industrial Area, Delhi',
+        checklist: [
+          { id: 'instrument-identification', label: 'Instrument identification and brand tag verified', checked: true },
+          { id: 'model-approval', label: 'Manufacturer model and approval certificate verified', checked: true },
+          { id: 'serial-number', label: 'Serial number matches the application document', checked: true },
+          { id: 'physical-condition', label: 'Physical condition and zero setting satisfactory', checked: true },
+          { id: 'test-standard', label: 'Applicable test standard verified', checked: true },
+          { id: 'tolerance', label: 'Maximum permissible error within prescribed limits', checked: finalDecision === 'PASS' },
+          { id: 'seal', label: 'Anti-tamper lead seal requirement assessed', checked: finalDecision === 'PASS' },
+        ],
         testReadings,
         observations,
         photos: [
