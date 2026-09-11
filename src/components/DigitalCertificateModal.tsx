@@ -1,0 +1,200 @@
+import React from 'react';
+import { X, Printer, QrCode, ShieldCheck, CheckCircle2, Award, Lock } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import type { DigitalCertificate } from '../types';
+
+interface DigitalCertificateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  certificate: DigitalCertificate;
+  onVerifyQR: (certNo: string) => void;
+}
+
+export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = ({
+  isOpen,
+  onClose,
+  certificate,
+  onVerifyQR,
+}) => {
+  if (!isOpen) return null;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white border border-slate-300 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden my-8 animate-in fade-in zoom-in-95 relative">
+        {/* Action Header bar (no-print) */}
+        <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between no-print">
+          <div className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-amber-400" />
+            <h3 className="font-bold text-sm font-heading">Digital Verification Certificate</h3>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              AUTHENTICATED
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onVerifyQR(certificate.certNo)}
+              className="px-3 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-semibold rounded-lg border border-amber-500/40 flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Verify QR</span>
+            </button>
+            <button
+              onClick={handlePrint}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print / Download PDF</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* PRINTABLE CERTIFICATE CARD BODY */}
+        <div
+          id="printable-certificate"
+          className="p-8 bg-gradient-to-b from-amber-50/40 via-white to-slate-50 border-8 border-slate-900 relative"
+        >
+          {/* Certificate Watermark Seal */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
+            <ShieldCheck className="w-96 h-96 text-slate-900" />
+          </div>
+
+          {/* Top Government Heading */}
+          <div className="text-center space-y-2 border-b-2 border-slate-900 pb-6 relative z-10">
+            <div className="flex justify-center mb-2">
+              <div className="w-14 h-14 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center shadow-lg border-2 border-amber-500">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+            </div>
+            <div className="text-xs font-extrabold tracking-widest text-slate-800 uppercase">
+              GOVERNMENT OF INDIA • DEPARTMENT OF LEGAL METROLOGY
+            </div>
+            <h1 className="text-2xl font-extrabold font-heading text-slate-900 tracking-tight uppercase">
+              VERIFICATION & STAMPING CERTIFICATE
+            </h1>
+            <p className="text-xs text-slate-600 italic">
+              Issued under Section 24 of the Legal Metrology Act, 2009 & Legal Metrology (General) Rules
+            </p>
+          </div>
+
+          {/* Certificate Details */}
+          <div className="py-6 space-y-6 relative z-10">
+            {/* Cert No & Status Bar */}
+            <div className="flex items-center justify-between p-4 bg-slate-100/80 rounded-2xl border border-slate-300">
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase">Certificate Serial Number</div>
+                <div className="text-lg font-extrabold text-slate-900 font-mono tracking-wide">{certificate.certNo}</div>
+              </div>
+              <div className="text-right">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-xs">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>STATUS: {certificate.status}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Main Instrument & Owner Specs Grid */}
+            <div className="grid grid-cols-2 gap-6 text-xs border-y border-slate-200 py-6">
+              {/* Left Column: Owner & Site */}
+              <div className="space-y-3">
+                <div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px]">Registered Instrument Owner</div>
+                  <div className="font-extrabold text-slate-900 text-sm">{certificate.ownerName}</div>
+                  <div className="text-slate-600">{certificate.ownerAddress}</div>
+                </div>
+
+                <div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px]">Verification Authority</div>
+                  <div className="font-semibold text-slate-800">{certificate.verificationAuthority}</div>
+                </div>
+              </div>
+
+              {/* Right Column: Instrument Specifications */}
+              <div className="space-y-3 border-l border-slate-200 pl-6">
+                <div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px]">Instrument Description</div>
+                  <div className="font-extrabold text-slate-900 text-sm">{certificate.instrumentCategory}</div>
+                  <div className="text-slate-700">
+                    Manufacturer: <strong>{certificate.manufacturer}</strong> ({certificate.modelNumber})
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="font-bold text-slate-500 uppercase text-[10px]">Serial Number</div>
+                    <div className="font-mono font-bold text-slate-900">{certificate.serialNumber}</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-500 uppercase text-[10px]">Capacity</div>
+                    <div className="font-semibold text-slate-900">{certificate.capacity}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dates & QR Code Section */}
+            <div className="grid grid-cols-3 gap-4 items-center bg-white p-4 rounded-2xl border border-slate-200">
+              <div>
+                <div className="font-bold text-slate-500 uppercase text-[10px]">Verification Date</div>
+                <div className="text-sm font-extrabold text-slate-900">{certificate.verificationDate}</div>
+              </div>
+
+              <div>
+                <div className="font-bold text-slate-500 uppercase text-[10px]">Certificate Valid Until</div>
+                <div className="text-sm font-extrabold text-emerald-700">{certificate.validUntilDate}</div>
+              </div>
+
+              {/* Dynamic QR Code */}
+              <div className="flex flex-col items-center justify-center border-l border-slate-200 pl-4">
+                <div className="p-2 bg-white rounded-xl border border-slate-300 shadow-sm">
+                  <QRCodeSVG
+                    value={`https://e-metro.gov.in/verify?cert=${certificate.certNo}`}
+                    size={80}
+                    level="H"
+                  />
+                </div>
+                <div className="text-[9px] font-mono text-slate-500 mt-1">Scan to Verify</div>
+              </div>
+            </div>
+
+            {/* Signatures & Security Hash */}
+            <div className="pt-4 flex items-end justify-between text-xs">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
+                  <Lock className="w-3 h-3 text-emerald-600" />
+                  <span>CRYPTOGRAPHIC SIGNATURE HASH:</span>
+                </div>
+                <div className="text-[9px] font-mono text-slate-600 max-w-xs break-all bg-slate-100 p-1.5 rounded border border-slate-200">
+                  {certificate.securityHash}
+                </div>
+              </div>
+
+              <div className="text-right space-y-1">
+                <div className="font-serif italic text-slate-800 text-sm font-bold border-b border-slate-900 pb-1">
+                  {certificate.issuingOfficerName}
+                </div>
+                <div className="font-bold text-slate-900 text-[11px]">{certificate.issuingOfficerDesignation}</div>
+                <div className="text-[10px] text-slate-500">Legal Metrology Officer (LMO)</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Warning */}
+          <div className="mt-4 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-500">
+            This digital certificate is legally valid under the Information Technology Act, 2000. Tampering with or altering this document is a punishable offence.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
