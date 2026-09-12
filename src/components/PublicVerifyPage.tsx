@@ -5,11 +5,11 @@ import {
   CheckCircle2,
   QrCode,
   Search,
-  ShieldCheck,
   XCircle,
 } from 'lucide-react';
 import type { DigitalCertificate } from '../types';
 import { StorageService } from '../services/storageService';
+import { BrandLogo } from './BrandLogo';
 
 interface PublicVerifyPageProps {
   initialCertNo?: string;
@@ -42,10 +42,10 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertN
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f8fafc] text-[#17324D]">
-      <header className="border-b border-slate-700 bg-[#17324D] px-4 py-3 text-white sm:px-6">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center border border-blue-300 bg-[#1558A6]"><ShieldCheck className="size-5" /></span><div><h1 className="text-lg font-bold">AccuMate certificate verification</h1><p className="text-xs text-slate-300">Prototype verification service · local demo records</p></div></div>
-          <button onClick={onBackToApp} className="inline-flex items-center gap-1.5 border border-slate-500 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700"><ArrowLeft className="size-3.5" /> Back to AccuMate</button>
+          <div className="flex items-center gap-2 sm:gap-3"><BrandLogo /><div><h1 className="text-lg font-bold text-[#17324D]">AccuMate certificate verification</h1><p className="text-xs text-slate-500">Prototype verification service · local demo records</p></div></div>
+          <button onClick={onBackToApp} className="inline-flex items-center gap-1.5 border border-[#1558A6] px-3 py-2 text-xs font-semibold text-[#1558A6] hover:bg-[#EAF3FB]"><ArrowLeft className="size-3.5" /> Back to AccuMate</button>
         </div>
       </header>
 

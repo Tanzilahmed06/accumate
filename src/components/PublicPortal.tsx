@@ -13,12 +13,13 @@ import {
   Menu,
   QrCode,
   Search,
-  ShieldCheck,
   Stamp,
   X,
 } from 'lucide-react';
 import type { PublicPageTab, VerificationApplication } from '../types';
 import { StorageService } from '../services/storageService';
+import { BrandLogo } from './BrandLogo';
+import { Navbar } from './Navbar';
 
 interface PublicPortalProps {
   onLogin: () => void;
@@ -53,13 +54,14 @@ const serviceCards = [
 ];
 
 const workflow = [
-  ['01', 'Application submitted'],
-  ['02', 'Document review'],
-  ['03', 'Officer assignment'],
-  ['04', 'Inspection'],
-  ['05', 'Verification result'],
-  ['06', 'Certificate processing'],
-  ['07', 'Completion'],
+  { number: '01', title: 'Application Submitted', description: 'Applicant submits the required application through the AccuMate platform.' },
+  { number: '02', title: 'Document Review', description: 'Submitted information and documents can be reviewed within the platform.' },
+  { number: '03', title: 'Officer Assignment', description: 'Applications can be assigned to the appropriate officer for further action.' },
+  { number: '04', title: 'Inspection', description: 'Inspection activities and relevant observations can be recorded digitally.' },
+  { number: '05', title: 'Verification Result', description: 'The inspection outcome can be recorded and tracked.' },
+  { number: '06', title: 'Certificate Processing', description: 'Certificate-related processing can be managed through the platform.' },
+  { number: '07', title: 'Completion', description: 'The application reaches its completed workflow state.' },
+  { number: '08', title: 'System Maintenance & Monitoring', description: 'Post-completion records, certificate status, audit trails, renewals and system activities can be monitored and maintained digitally.' },
 ];
 
 const officialDocuments = [
@@ -84,7 +86,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ onLogin, onOpenVerif
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[60] focus:bg-white focus:px-3 focus:py-2 focus:text-[#17324D] focus:shadow">
         Skip to main content
       </a>
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
+      <Navbar>
         <div className="border-b border-slate-200 bg-[#17324D] px-4 py-1.5 text-[11px] text-slate-100 sm:px-6">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <span>AccuMate prototype digital platform</span>
@@ -92,8 +94,8 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ onLogin, onOpenVerif
           </div>
         </div>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <button onClick={() => selectTab('home')} className="flex items-center gap-3 text-left" aria-label="AccuMate home">
-            <span className="grid size-10 place-items-center border border-[#1558A6] bg-[#1558A6] text-white shadow-sm"><ShieldCheck className="size-5" /></span>
+          <button onClick={() => selectTab('home')} className="flex items-center gap-2 text-left sm:gap-3" aria-label="AccuMate home">
+            <BrandLogo />
             <span>
               <span className="block text-lg font-bold tracking-tight text-[#17324D]">AccuMate</span>
               <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500">Legal Metrology workflows</span>
@@ -121,7 +123,7 @@ export const PublicPortal: React.FC<PublicPortalProps> = ({ onLogin, onOpenVerif
             {navigation.map((item) => <NavButton key={item.id} {...item} active={activeTab === item.id} onClick={() => selectTab(item.id)} />)}
           </nav>
         )}
-      </header>
+      </Navbar>
 
       <main id="main-content" className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10">
         {activeTab === 'home' && <HomeContent onApply={onLogin} onVerify={onOpenVerify} onNavigate={selectTab} />}
@@ -211,10 +213,10 @@ const HomeContent: React.FC<{ onApply: () => void; onVerify: (certificateNumber?
       </div>
     </section>
 
-    <section className="grid gap-8 border-t border-slate-200 pt-10 lg:grid-cols-[.9fr_1.1fr]">
-      <div><Eyebrow>Proposed AccuMate workflow</Eyebrow><h2 className="mt-2 text-2xl font-bold text-[#17324D]">A clear route from application to completion</h2><p className="mt-3 text-sm leading-6 text-slate-600">This sequence demonstrates how a digital workflow can be organized. It is not a statement of legally mandated procedure.</p></div>
-      <ol className="grid gap-3 sm:grid-cols-2">
-        {workflow.map(([number, label]) => <li key={number} className="flex items-center gap-3 border border-slate-200 bg-white px-4 py-3"><span className="font-mono text-sm font-bold text-[#1558A6]">{number}</span><span className="text-sm font-semibold text-[#17324D]">{label}</span></li>)}
+    <section className="border-t border-slate-200 pt-10">
+      <div className="max-w-3xl"><Eyebrow>Proposed AccuMate workflow</Eyebrow><h2 className="mt-2 text-2xl font-bold text-[#17324D]">A clear route from application to completion</h2><p className="mt-3 text-sm leading-6 text-slate-600">This sequence demonstrates how a digital workflow can be organized. It is not a statement of legally mandated procedure.</p><p className="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">AccuMate proposed workflow</p></div>
+      <ol className="relative mt-7 space-y-0 xl:grid xl:grid-cols-8 xl:gap-0 xl:space-y-0 xl:before:absolute xl:before:left-[6.25%] xl:before:right-[6.25%] xl:before:top-4 xl:before:h-px xl:before:bg-slate-200">
+        {workflow.map((step, index) => <li key={step.number} className="relative pb-7 last:pb-0 xl:pb-0 xl:pr-4 xl:last:pr-0"><span aria-hidden="true" className={`absolute left-4 top-8 bottom-0 w-px bg-slate-200 xl:hidden ${index === workflow.length - 1 ? 'hidden' : ''}`} /><div className="relative flex gap-3 xl:block"><span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full border border-[#cfe2f3] bg-[#EAF3FB] font-mono text-xs font-bold text-[#1558A6]">{step.number}</span><div className="min-w-0 xl:mt-3"><h3 className="text-sm font-bold leading-5 text-[#17324D]">{step.title}</h3><p className="mt-1 text-xs leading-5 text-slate-600">{step.description}</p></div></div></li>)}
       </ol>
     </section>
   </div>

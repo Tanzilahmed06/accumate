@@ -11,12 +11,13 @@ import {
   Mail,
   QrCode,
   RefreshCw,
-  ShieldCheck,
   Smartphone,
   Users,
 } from 'lucide-react';
 import type { UserRole } from '../types';
 import { StorageService } from '../services/storageService';
+import { BrandLogo } from './BrandLogo';
+import { Navbar } from './Navbar';
 
 interface LoginPageProps {
   onLoginSuccess: (role: UserRole) => void;
@@ -108,14 +109,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenPubl
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-indigo-100 selection:text-indigo-950">
-      <header className="border-b border-slate-200 bg-white/90 px-5 py-4 backdrop-blur-sm sm:px-8">
+      <Navbar className="bg-white/90 px-5 py-4 backdrop-blur-sm sm:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-5">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-indigo-700 text-white shadow-sm shadow-indigo-200">
-              <ShieldCheck className="size-5" strokeWidth={2.3} />
-            </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <BrandLogo />
             <div>
-              <div className="font-heading text-lg font-bold tracking-tight text-slate-950">e-Metro</div>
+              <div className="font-heading text-lg font-bold tracking-tight text-slate-950">AccuMate</div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-500">Legal Metrology Services</div>
             </div>
           </div>
@@ -128,7 +127,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenPubl
             <span className="sm:hidden">Verify</span>
           </button>
         </div>
-      </header>
+      </Navbar>
 
       <main className="mx-auto grid w-full max-w-7xl items-stretch gap-8 px-5 py-8 lg:min-h-[calc(100vh-137px)] lg:grid-cols-[1fr_480px] lg:gap-16 lg:px-8 lg:py-12">
         <section className="relative flex flex-col justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 px-7 py-10 text-white shadow-xl shadow-slate-300/40 sm:px-10 lg:py-14">

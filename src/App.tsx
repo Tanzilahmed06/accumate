@@ -26,8 +26,10 @@ import { ExpiryAlertsModal } from './components/ExpiryAlertsModal';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { TimelineModal } from './components/TimelineModal';
 import { PublicPortal } from './components/PublicPortal';
+import { SplashLoader } from './components/SplashLoader';
 
 export default function App() {
+  const [isSplashComplete, setIsSplashComplete] = useState(false);
   // Authentication & Role state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentRole, setCurrentRole] = useState<UserRole>(() => StorageService.getCurrentRole());
@@ -122,6 +124,10 @@ export default function App() {
     setIsPublicVerifyRoute(true);
     setIsCertModalOpen(false);
   };
+
+  if (!isSplashComplete) {
+    return <SplashLoader onComplete={() => setIsSplashComplete(true)} />;
+  }
 
   if (isPublicVerifyRoute) {
     return (
