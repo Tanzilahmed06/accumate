@@ -15,7 +15,7 @@ interface GATCDashboardProps {
 export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRefresh }) => {
   const gatcUser = StorageService.getCurrentUser();
   const [selectedApp, setSelectedApp] = useState<VerificationApplication | null>(null);
-  const [labNotes, setLabNotes] = useState('Laboratory calibration test performed using NABL accredited standards. Instrument error within Class B tolerances.');
+  const [labNotes, setLabNotes] = useState('Prototype test-centre observation recorded for demonstration purposes.');
 
   const gatcApps = applications.filter((a) => a.category === 'Water Meter' || a.category === 'Electricity Meter' || a.assignedGATCId);
 
@@ -33,16 +33,16 @@ export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRe
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1">
               <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-              GOVERNMENT APPROVED TEST CENTRE (GATC) LAB PORTAL
+              TEST CENTRE WORKSPACE · DEMO DATA
             </div>
             <h2 className="text-2xl font-bold font-heading">{gatcUser.organization}</h2>
             <p className="text-xs text-slate-400 mt-1">
-              NABL Accredited Test Facility | Approved under Legal Metrology Rules, 2011
+              Prototype workflow for Government Approved Test Centre-related work items
             </p>
           </div>
           <div className="bg-purple-950/60 p-3 rounded-xl border border-purple-800/60 text-xs">
-            <div className="text-purple-300">Lab Accreditation No</div>
-            <div className="font-bold text-white font-mono">GATC-NABL-2026-8819</div>
+            <div className="text-purple-300">Demo centre reference</div>
+            <div className="font-bold text-white font-mono">DEMO-GATC-001</div>
           </div>
         </div>
       </div>
@@ -51,7 +51,7 @@ export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRe
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="border-b border-slate-200 px-6 py-4 bg-slate-50/50">
           <h3 className="font-bold text-slate-900 text-sm font-heading">Assigned Laboratory Test Requests</h3>
-          <p className="text-xs text-slate-500">Conduct precision calibration and submit verified test records.</p>
+          <p className="text-xs text-slate-500">Record proposed test-centre results in this demo workspace.</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -61,7 +61,7 @@ export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRe
                 <th className="px-6 py-3.5">App No & Instrument</th>
                 <th className="px-6 py-3.5">Owner / Trader</th>
                 <th className="px-6 py-3.5">Category</th>
-                <th className="px-6 py-3.5">Fee Status</th>
+                <th className="px-6 py-3.5">Demo transaction</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
@@ -84,7 +84,7 @@ export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRe
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-800">{app.ownerName}</td>
                     <td className="px-6 py-4 font-semibold text-slate-700">{app.category}</td>
-                    <td className="px-6 py-4 font-bold text-emerald-600">₹{app.feeAmount} (PAID ✓)</td>
+                    <td className="px-6 py-4 font-bold text-emerald-600">₹{app.feeAmount} (DEMO)</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => setSelectedApp(app)}
@@ -124,7 +124,7 @@ export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRe
 
               <div className="p-3 border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl text-center text-xs text-slate-600">
                 <Upload className="w-5 h-5 mx-auto mb-1 text-slate-400" />
-                <span className="font-semibold">Attach NABL Test Certificate PDF</span>
+                <span className="font-semibold">Attach demo test record</span>
               </div>
             </div>
 
@@ -141,7 +141,7 @@ export const GATCDashboard: React.FC<GATCDashboardProps> = ({ applications, onRe
                 className="px-5 py-2 bg-purple-600 text-white font-semibold text-xs rounded-xl shadow cursor-pointer flex items-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Submit Result to Authority</span>
+                <span>Submit prototype result</span>
               </button>
             </div>
           </div>

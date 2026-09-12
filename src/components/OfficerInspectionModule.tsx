@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   Smartphone,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import type { VerificationApplication, Instrument, TestReading } from '../types';
 import { StorageService } from '../services/storageService';
 import { CATEGORY_TOLERANCE_RULES, evaluateTestReading } from '../services/verificationEngine';
@@ -33,7 +32,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
   );
 
   const [observations, setObservations] = useState(
-    'All load cells and strain gauges operating within prescribed MPE limits. Lead seal (LM-SEAL-2026-9901) attached securely.'
+    'Prototype inspection observation. Confirm applicable official requirements outside this demonstration.'
   );
   const [geoTagged, setGeoTagged] = useState('28.6139° N, 77.2090° E (Accuracy: ±2.5m)');
   const [photoCaptured, setPhotoCaptured] = useState(true);
@@ -74,13 +73,13 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
         locationGeo: geoTagged,
         locationAddress: instrument?.locationAddress || 'Okhla Industrial Area, Delhi',
         checklist: [
-          { id: 'instrument-identification', label: 'Instrument identification and brand tag verified', checked: true },
-          { id: 'model-approval', label: 'Manufacturer model and approval certificate verified', checked: true },
-          { id: 'serial-number', label: 'Serial number matches the application document', checked: true },
-          { id: 'physical-condition', label: 'Physical condition and zero setting satisfactory', checked: true },
-          { id: 'test-standard', label: 'Applicable test standard verified', checked: true },
-          { id: 'tolerance', label: 'Maximum permissible error within prescribed limits', checked: finalDecision === 'PASS' },
-          { id: 'seal', label: 'Anti-tamper lead seal requirement assessed', checked: finalDecision === 'PASS' },
+          { id: 'instrument-identification', label: 'Demo identification review completed', checked: true },
+          { id: 'document-reference', label: 'Demo application reference reviewed', checked: true },
+          { id: 'serial-number', label: 'Demo serial-number match recorded', checked: true },
+          { id: 'physical-condition', label: 'Demo condition observation recorded', checked: true },
+          { id: 'test-reading', label: 'Demo test readings recorded', checked: true },
+          { id: 'result', label: 'Prototype result selected', checked: finalDecision === 'PASS' },
+          { id: 'completion', label: 'Demo completion note recorded', checked: finalDecision === 'PASS' },
         ],
         testReadings,
         observations,
@@ -92,14 +91,6 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
       });
 
       setIsSubmitting(false);
-
-      if (finalDecision === 'PASS') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
-      }
 
       onSuccess(res.certificate?.certNo);
     }, 1000);
@@ -132,7 +123,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
         <div className="bg-slate-900 px-6 py-5 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">
-              LEGAL METROLOGY ON-SITE FIELD VERIFICATION
+              PROTOTYPE INSPECTION WORKSPACE · DEMO DATA
             </div>
             <h2 className="text-xl font-bold font-heading text-white">{application.instrumentTitle}</h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -140,7 +131,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
             </p>
           </div>
           <div className="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-xs">
-            <div className="text-slate-400">Tolerance Category</div>
+            <div className="text-slate-400">Instrument category</div>
             <div className="font-bold text-amber-300 font-heading">{application.category}</div>
           </div>
         </div>
@@ -176,10 +167,10 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                2. Test Readings & Maximum Permissible Error (MPE) Checks
+                2. Demo Test Readings
               </h3>
               <span className="text-[10px] font-semibold text-slate-500">
-                Auto-calculated against Legal Metrology Schedule
+                Prototype decision support · not a statutory checklist
               </span>
             </div>
 
@@ -237,7 +228,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
           {/* Section 3: Photo Evidence & Observations */}
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-              3. Officer Observations & Field Evidence
+                3. Prototype observations &amp; evidence
             </h3>
 
             <div className="space-y-4">
@@ -257,7 +248,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
                   <Camera className="w-6 h-6 text-slate-500" />
                   <div>
                     <div className="text-xs font-semibold text-slate-800">
-                      {photoCaptured ? 'On-Site Photo Evidence Attached ✓' : 'Capture On-Site Photo'}
+                      {photoCaptured ? 'Demo evidence attached' : 'Attach demo evidence'}
                     </div>
                     <div className="text-[10px] text-slate-400">Geo-tagged image file</div>
                   </div>
@@ -277,9 +268,9 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
           <div className="p-5 bg-slate-900 text-white rounded-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-amber-400 font-bold uppercase tracking-wider">Final Verification Decision</div>
+                <div className="text-xs text-amber-400 font-bold uppercase tracking-wider">Prototype result</div>
                 <div className="text-sm font-semibold text-slate-300">
-                  Select decision based on recorded MPE tolerance testing.
+                  Select a demo result based on the prototype record above.
                 </div>
               </div>
             </div>
@@ -295,7 +286,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
                 }`}
               >
                 <CheckCircle2 className="w-5 h-5" />
-                <span className="text-sm">MARK AS PASS (ISSUE CERTIFICATE)</span>
+                <span className="text-sm">MARK AS PASS</span>
               </button>
 
               <button
@@ -308,7 +299,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
                 }`}
               >
                 <XCircle className="w-5 h-5" />
-                <span className="text-sm">MARK AS FAIL (REJECT INSTRUMENT)</span>
+                <span className="text-sm">MARK AS FAIL</span>
               </button>
             </div>
           </div>
@@ -338,8 +329,8 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
                   <Award className="w-4 h-4 text-amber-300" />
                   <span>
                     {finalDecision === 'PASS'
-                      ? 'Submit Inspection & Issue Digital Certificate'
-                      : 'Submit Inspection & Reject Application'}
+                      ? 'Submit Prototype Inspection'
+                      : 'Submit Prototype Result'}
                   </span>
                 </>
               )}

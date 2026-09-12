@@ -70,7 +70,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
               <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-              LEGAL METROLOGY OFFICER (LMO) FIELD PORTAL
+              OFFICER WORKSPACE · DEMO DATA
             </div>
             <h2 className="text-2xl font-bold font-heading">{officerUser.name}</h2>
             <p className="text-xs text-slate-400 mt-1 max-w-xl">
@@ -78,8 +78,8 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
             </p>
           </div>
           <div className="bg-slate-800/80 px-4 py-3 rounded-xl border border-slate-700/80 text-xs">
-            <div className="text-slate-400">Circle Jurisdiction</div>
-            <div className="font-bold text-amber-300 font-heading">Delhi Circle-IV (Okhla & South Dist)</div>
+            <div className="text-slate-400">Demo work area</div>
+            <div className="font-bold text-amber-300 font-heading">Prototype inspection queue</div>
           </div>
         </div>
       </div>
@@ -87,9 +87,9 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <OfficerKpiCard
-          label="Pending Approvals"
+          label="Pending Applications"
           value={pendingCount}
-          subtext="Requires doc verification"
+          subtext="Requires a demo action"
           color="bg-amber-500/10 border-amber-500/30 text-amber-600"
           icon={Clock}
         />
@@ -101,16 +101,16 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
           icon={Calendar}
         />
         <OfficerKpiCard
-          label="Certificates Issued"
+          label="Certificate Records"
           value={issuedCount}
-          subtext="Approved & stamped"
+          subtext="Prototype records completed"
           color="bg-emerald-500/10 border-emerald-500/30 text-emerald-600"
           icon={Award}
         />
         <OfficerKpiCard
-          label="Rejected Instruments"
+          label="Failed Results"
           value={rejectedCount}
-          subtext="Failed MPE tolerance"
+          subtext="Prototype result: fail"
           color="bg-rose-500/10 border-rose-500/30 text-rose-600"
           icon={XCircle}
         />
@@ -121,7 +121,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
         <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
           <div>
             <h3 className="font-bold text-slate-900 text-sm font-heading">Assigned Verification Queue</h3>
-            <p className="text-xs text-slate-500">Review specs, schedule inspection, or perform digital field test.</p>
+            <p className="text-xs text-slate-500">Review prototype records, schedule a demo inspection, or record a result.</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
               <tr>
                 <th className="px-6 py-3.5">Application No & Instrument</th>
                 <th className="px-6 py-3.5">Trader Details</th>
-                <th className="px-6 py-3.5">Fee Paid</th>
+                <th className="px-6 py-3.5">Demo transaction</th>
                 <th className="px-6 py-3.5">Schedule & Status</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
@@ -193,7 +193,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
                         ₹{app.feeAmount}
-                        <div className="text-[10px] font-bold text-emerald-600">PAID ✓</div>
+                        <div className="text-[10px] font-bold text-emerald-600">DEMO PAID</div>
                       </td>
                       <td className="px-6 py-4">
                         <AppStatusBadge status={app.status} />
@@ -217,7 +217,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
                         {app.status !== 'CERTIFICATE_GENERATED' && app.status !== 'REJECTED' ? (
                           <button
                             onClick={() => onStartInspection(app)}
-                            className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 font-semibold rounded-lg text-xs transition-all shadow-sm cursor-pointer inline-flex items-center gap-1"
+                            className="px-3.5 py-1.5 bg-[#1558A6] text-white hover:bg-[#104986] font-semibold rounded-lg text-xs transition-all shadow-sm cursor-pointer inline-flex items-center gap-1"
                           >
                             <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
                             <span>Start Inspection</span>

@@ -43,8 +43,8 @@ export const TimelineModal: React.FC<TimelineModalProps> = ({
         {/* Timeline Body */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1">
-            <div className="text-slate-500 font-medium">Assigned Officer / Authority</div>
-            <div className="font-bold text-slate-900 text-sm">{application.assignedOfficerName || 'Legal Metrology Inspector Vikramaditya Roy'}</div>
+            <div className="text-slate-500 font-medium">Prototype assignment</div>
+            <div className="font-bold text-slate-900 text-sm">{application.assignedOfficerName || 'Demo Officer'}</div>
             {application.scheduledInspectionDate && (
               <div className="text-blue-700 font-semibold pt-1 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
@@ -55,7 +55,7 @@ export const TimelineModal: React.FC<TimelineModalProps> = ({
 
           {/* Visual Step Timeline */}
           <div>
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Verification Progress Timeline</h4>
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Proposed workflow timeline</h4>
             <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
               {application.timeline.map((step, idx) => (
                 <div key={idx} className="relative text-xs">

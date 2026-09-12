@@ -51,10 +51,10 @@ const REGIONAL_COMPLIANCE = [
 ];
 
 const OFFICERS_MONITOR = [
-  { id: 'USR-OFFICER-102', name: 'Inspector Vikramaditya Roy', circle: 'Delhi Circle-IV', assigned: 14, completed: 12, passRate: '96%' },
-  { id: 'USR-OFFICER-105', name: 'Inspector Kavita Sharma', circle: 'Gurugram Circle-I', assigned: 18, completed: 17, passRate: '94%' },
-  { id: 'USR-OFFICER-109', name: 'Inspector Rajesh Varma', circle: 'Noida Circle-II', assigned: 11, completed: 10, passRate: '91%' },
-  { id: 'USR-GATC-204', name: 'National Metrology Lab (GATC-089)', circle: 'Central NABL Facility', assigned: 25, completed: 24, passRate: '98%' },
+  { id: 'USR-OFFICER-102', name: 'Demo Officer 01', circle: 'Sample Work Area A', assigned: 14, completed: 12, passRate: '96%' },
+  { id: 'USR-OFFICER-105', name: 'Demo Officer 02', circle: 'Sample Work Area B', assigned: 18, completed: 17, passRate: '94%' },
+  { id: 'USR-OFFICER-109', name: 'Demo Officer 03', circle: 'Sample Work Area C', assigned: 11, completed: 10, passRate: '91%' },
+  { id: 'USR-GATC-204', name: 'Sample Test Centre', circle: 'Prototype Test Area', assigned: 25, completed: 24, passRate: '98%' },
 ];
 
 export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = ({
@@ -88,11 +88,11 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">
               <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              CENTRAL EXECUTIVE ANALYTICS & COMPLIANCE MONITOR
+              ADMINISTRATION WORKSPACE · DEMO DATA
             </div>
-            <h2 className="text-2xl font-bold font-heading">Controller of Legal Metrology</h2>
+            <h2 className="text-2xl font-bold font-heading">AccuMate administration</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Ministry of Consumer Affairs, Food & Public Distribution, Government of India
+              Prototype application, inspection and certificate record monitoring
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -101,7 +101,7 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
                 const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stats));
                 const downloadAnchor = document.createElement('a');
                 downloadAnchor.setAttribute("href", jsonStr);
-                downloadAnchor.setAttribute("download", "e_metro_compliance_report.json");
+                downloadAnchor.setAttribute("download", "accumate_demo_report.json");
                 document.body.appendChild(downloadAnchor);
                 downloadAnchor.click();
                 downloadAnchor.remove();
@@ -109,7 +109,7 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
               className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700 shadow-sm flex items-center gap-2 transition-all cursor-pointer"
             >
               <Download className="w-4 h-4 text-amber-400" />
-              <span>Export Compliance Audit Report</span>
+              <span>Export demo activity report</span>
             </button>
           </div>
         </div>
@@ -134,7 +134,7 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-sm font-heading">Application Volume & Revenue Growth</h3>
-              <p className="text-xs text-slate-500">Monthly verification applications & statutory fee collection trend.</p>
+              <p className="text-xs text-slate-500">Sample application and prototype transaction trend.</p>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
               +22.4% YoY Growth

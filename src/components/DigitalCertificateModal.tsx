@@ -29,9 +29,9 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
         <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-amber-400" />
-            <h3 className="font-bold text-sm font-heading">Digital Verification Certificate</h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              AUTHENTICATED
+            <h3 className="font-bold text-sm font-heading">Prototype certificate record</h3>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-500/30">
+              DEMO / PROTOTYPE
             </span>
           </div>
 
@@ -62,7 +62,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
         {/* PRINTABLE CERTIFICATE CARD BODY */}
         <div
           id="printable-certificate"
-          className="p-8 bg-gradient-to-b from-amber-50/40 via-white to-slate-50 border-8 border-slate-900 relative"
+          className="p-8 bg-white border-8 border-[#17324D] relative"
         >
           {/* Certificate Watermark Seal */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
@@ -77,13 +77,13 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               </div>
             </div>
             <div className="text-xs font-extrabold tracking-widest text-slate-800 uppercase">
-              GOVERNMENT OF INDIA • DEPARTMENT OF LEGAL METROLOGY
+              ACCUMATE · PROTOTYPE DIGITAL PLATFORM
             </div>
             <h1 className="text-2xl font-extrabold font-heading text-slate-900 tracking-tight uppercase">
-              VERIFICATION & STAMPING CERTIFICATE
+              DEMO CERTIFICATE RECORD
             </h1>
             <p className="text-xs text-slate-600 italic">
-              Issued under Section 24 of the Legal Metrology Act, 2009 & Legal Metrology (General) Rules
+              This layout demonstrates certificate information fields; it is not an official certificate.
             </p>
           </div>
 
@@ -108,13 +108,13 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               {/* Left Column: Owner & Site */}
               <div className="space-y-3">
                 <div>
-                  <div className="font-bold text-slate-500 uppercase text-[10px]">Registered Instrument Owner</div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px]">Prototype applicant / trader</div>
                   <div className="font-extrabold text-slate-900 text-sm">{certificate.ownerName}</div>
                   <div className="text-slate-600">{certificate.ownerAddress}</div>
                 </div>
 
                 <div>
-                  <div className="font-bold text-slate-500 uppercase text-[10px]">Verification Authority</div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px]">Prototype record source</div>
                   <div className="font-semibold text-slate-800">{certificate.verificationAuthority}</div>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               </div>
 
               <div>
-                <div className="font-bold text-slate-500 uppercase text-[10px]">Certificate Valid Until</div>
+                  <div className="font-bold text-slate-500 uppercase text-[10px]">Validity shown in demo</div>
                 <div className="text-sm font-extrabold text-emerald-700">{certificate.validUntilDate}</div>
               </div>
 
@@ -158,12 +158,12 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               <div className="flex flex-col items-center justify-center border-l border-slate-200 pl-4">
                 <div className="p-2 bg-white rounded-xl border border-slate-300 shadow-sm">
                   <QRCodeSVG
-                    value={`https://e-metro.gov.in/verify?cert=${certificate.certNo}`}
+                    value={`https://accumate.example/verify?cert=${certificate.certNo}`}
                     size={80}
                     level="H"
                   />
                 </div>
-                <div className="text-[9px] font-mono text-slate-500 mt-1">Scan to Verify</div>
+                <div className="text-[9px] font-mono text-slate-500 mt-1">Scan prototype QR</div>
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               <div className="space-y-1">
                 <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
                   <Lock className="w-3 h-3 text-emerald-600" />
-                  <span>CRYPTOGRAPHIC SIGNATURE HASH:</span>
+                  <span>DEMO RECORD REFERENCE:</span>
                 </div>
                 <div className="text-[9px] font-mono text-slate-600 max-w-xs break-all bg-slate-100 p-1.5 rounded border border-slate-200">
                   {certificate.securityHash}
@@ -184,14 +184,14 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
                   {certificate.issuingOfficerName}
                 </div>
                 <div className="font-bold text-slate-900 text-[11px]">{certificate.issuingOfficerDesignation}</div>
-                <div className="text-[10px] text-slate-500">Legal Metrology Officer (LMO)</div>
+                <div className="text-[10px] text-slate-500">Prototype issuing role</div>
               </div>
             </div>
           </div>
 
           {/* Footer Warning */}
           <div className="mt-4 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-500">
-            This digital certificate is legally valid under the Information Technology Act, 2000. Tampering with or altering this document is a punishable offence.
+            DEMO / PROTOTYPE: This record is not an official Government-issued certificate and must not be relied on as one.
           </div>
         </div>
       </div>

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  QrCode,
-  ShieldCheck,
-  Search,
-  CheckCircle2,
   AlertTriangle,
-  XCircle,
   ArrowLeft,
-  Lock,
+  CheckCircle2,
+  QrCode,
+  Search,
+  ShieldCheck,
+  XCircle,
 } from 'lucide-react';
 import type { DigitalCertificate } from '../types';
 import { StorageService } from '../services/storageService';
@@ -18,18 +17,9 @@ interface PublicVerifyPageProps {
 }
 
 export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertNo, onBackToApp }) => {
-  const [query, setQuery] = useState(initialCertNo || 'LM-CERT-2025-9011');
-  const [certificate, setCertificate] = useState<DigitalCertificate | undefined>(() =>
-    StorageService.getCertificateByNumber(query)
-  );
-  const [isSearched, setIsSearched] = useState(true);
-
-  const handleSearch = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const result = StorageService.getCertificateByNumber(query);
-    setCertificate(result);
-    setIsSearched(true);
-  };
+  const [query, setQuery] = useState(initialCertNo || 'DEMO-CERT-2026-001');
+  const [certificate, setCertificate] = useState<DigitalCertificate | undefined>(() => StorageService.getCertificateByNumber(query));
+  const [searched, setSearched] = useState(true);
 
   useEffect(() => {
     if (initialCertNo) {
@@ -38,212 +28,46 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertN
     }
   }, [initialCertNo]);
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
-      {/* Top Public Header */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-amber-500 p-0.5 shadow-md flex items-center justify-center">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6 text-amber-400" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold font-heading text-white">e-Metro Verification Portal</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  PUBLIC ACCESS
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">Government of India • Ministry of Consumer Affairs</p>
-            </div>
-          </div>
+  const verify = (event: React.FormEvent) => {
+    event.preventDefault();
+    setCertificate(StorageService.getCertificateByNumber(query));
+    setSearched(true);
+  };
 
-          <button
-            onClick={onBackToApp}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Go to Portal Dashboard</span>
-          </button>
+  const useDemo = (number: string) => {
+    setQuery(number);
+    setCertificate(StorageService.getCertificateByNumber(number));
+    setSearched(true);
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-[#17324D]">
+      <header className="border-b border-slate-700 bg-[#17324D] px-4 py-3 text-white sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center border border-blue-300 bg-[#1558A6]"><ShieldCheck className="size-5" /></span><div><h1 className="text-lg font-bold">AccuMate certificate verification</h1><p className="text-xs text-slate-300">Prototype verification service · local demo records</p></div></div>
+          <button onClick={onBackToApp} className="inline-flex items-center gap-1.5 border border-slate-500 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700"><ArrowLeft className="size-3.5" /> Back to AccuMate</button>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 py-10 flex-1 w-full space-y-8">
-        {/* Search Box */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
-          <div className="text-center space-y-1">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20 mb-1">
-              <QrCode className="w-4 h-4" />
-              PUBLIC CERTIFICATE & STAMPING AUDIT
-            </div>
-            <h2 className="text-2xl font-bold font-heading text-white">Verify Legal Metrology Certificate</h2>
-            <p className="text-xs text-slate-400 max-w-lg mx-auto">
-              Enter the Certificate Number, Application Reference No, or Instrument Serial Number to verify authenticity.
-            </p>
-          </div>
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-8 sm:py-10">
+        <div className="border-l-4 border-[#D89000] bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-950"><strong>PROTOTYPE VERIFICATION RECORD.</strong> This search checks AccuMate demo data only. It is not connected to an official Government certificate database.</div>
+        <section className="border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="text-center"><div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#1558A6]"><QrCode className="size-4" /> Public verification</div><h2 className="mt-2 text-2xl font-bold text-[#17324D]">Verify a certificate record</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">Enter a prototype certificate number, application reference, instrument ID, serial number, or a QR value.</p></div>
+          <form onSubmit={verify} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row"><label className="sr-only" htmlFor="certificate-query">Certificate number or QR value</label><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 size-4 text-slate-400" /><input id="certificate-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="DEMO-CERT-2026-001" className="w-full border border-slate-300 py-2.5 pl-9 pr-3 font-mono text-sm text-[#17324D] outline-none focus:border-[#1558A6] focus:ring-2 focus:ring-[#1558A6]/20" /></div><button className="bg-[#1558A6] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#104986]">Verify certificate</button></form>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs"><span className="text-slate-500">Try prototype records:</span><button type="button" onClick={() => useDemo('DEMO-CERT-2026-001')} className="border border-[#1558A6] bg-[#EAF3FB] px-2 py-1 font-mono font-semibold text-[#1558A6]">DEMO-CERT-2026-001</button><button type="button" onClick={() => useDemo('DEMO-CERT-2025-002')} className="border border-slate-300 bg-white px-2 py-1 font-mono font-semibold text-slate-700">DEMO-CERT-2025-002</button></div>
+        </section>
 
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3 max-w-xl mx-auto">
-            <div className="relative w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-              <input
-                type="text"
-                placeholder="e.g. LM-CERT-2025-9011 or APP-2026-8801"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono tracking-wider"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-2xl shadow-lg transition-all cursor-pointer shrink-0"
-            >
-              Verify Certificate
-            </button>
-          </form>
-
-          {/* Quick Demo Certificate Presets */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-400 pt-2">
-            <span>Try sample certificates:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('LM-CERT-2025-9011');
-                setCertificate(StorageService.getCertificateByNumber('LM-CERT-2025-9011'));
-              }}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg font-mono border border-slate-700 cursor-pointer"
-            >
-              LM-CERT-2025-9011 (VALID)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('LM-CERT-2024-1102');
-                setCertificate(StorageService.getCertificateByNumber('LM-CERT-2024-1102'));
-              }}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-rose-300 rounded-lg font-mono border border-slate-700 cursor-pointer"
-            >
-              LM-CERT-2024-1102 (EXPIRED)
-            </button>
-          </div>
-        </div>
-
-        {/* VERIFICATION RESULT CARD */}
-        {isSearched && (
-          <div>
-            {certificate ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-6 p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4">
-                {/* Status Indicator Banner */}
-                {certificate.status === 'VALID' ? (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-4 text-emerald-400">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-7 h-7 text-emerald-400" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-extrabold font-heading text-white">CERTIFICATE STATUS: VALID ✓</div>
-                      <div className="text-xs text-emerald-300">
-                        Authenticated digital certificate issued by Legal Metrology Department. Valid until{' '}
-                        <strong>{certificate.validUntilDate}</strong>.
-                      </div>
-                    </div>
-                  </div>
-                ) : certificate.status === 'EXPIRED' ? (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-4 text-rose-400">
-                    <div className="w-12 h-12 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-7 h-7 text-rose-400" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-extrabold font-heading text-white">CERTIFICATE STATUS: EXPIRED</div>
-                      <div className="text-xs text-rose-300">
-                        This certificate expired on <strong>{certificate.validUntilDate}</strong>. Commercial use without re-verification is prohibited under Section 24 of Legal Metrology Act.
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-rose-900/30 border border-rose-600 rounded-2xl flex items-center gap-4 text-rose-300">
-                    <XCircle className="w-8 h-8 text-rose-500 shrink-0" />
-                    <div>
-                      <div className="text-lg font-extrabold text-white">INVALID OR REVOKED CERTIFICATE</div>
-                      <div className="text-xs">Do not rely on this certificate. Report suspect instruments to Legal Metrology Hotline.</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Instrument Specifications */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs border-y border-slate-800 py-6">
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Certificate Number</div>
-                      <div className="text-base font-extrabold text-amber-400 font-mono">{certificate.certNo}</div>
-                    </div>
-
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Instrument Owner</div>
-                      <div className="text-sm font-bold text-white">{certificate.ownerName}</div>
-                      <div className="text-slate-400">{certificate.ownerAddress}</div>
-                    </div>
-
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Issuing Authority</div>
-                      <div className="text-slate-300">{certificate.verificationAuthority}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 md:border-l border-slate-800 md:pl-6">
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Instrument Details</div>
-                      <div className="text-sm font-bold text-white">{certificate.instrumentCategory}</div>
-                      <div className="text-slate-400">
-                        {certificate.manufacturer} ({certificate.modelNumber})
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase">Serial Number</div>
-                        <div className="font-mono text-white font-bold">{certificate.serialNumber}</div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase">Capacity</div>
-                        <div className="text-slate-300">{certificate.capacity}</div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Verification Officer</div>
-                      <div className="text-slate-300">{certificate.issuingOfficerName} ({certificate.issuingOfficerDesignation})</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cryptographic Security Hash */}
-                <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-amber-400 font-mono font-bold">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>CRYPTOGRAPHIC DIGITAL SIGNATURE HASH</span>
-                  </div>
-                  <div className="text-[10px] font-mono text-slate-400 break-all">{certificate.securityHash}</div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
-                <XCircle className="w-12 h-12 text-rose-500 mx-auto" />
-                <h3 className="text-lg font-bold text-white">Certificate Not Found</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  No Legal Metrology certificate matches query "<strong>{query}</strong>". Please verify the number or scan a valid e-Metro QR code.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+        {searched && (certificate ? <CertificateResult certificate={certificate} /> : <section className="border border-dashed border-slate-300 bg-white px-5 py-12 text-center"><XCircle className="mx-auto size-8 text-[#C93636]" /><h2 className="mt-3 text-lg font-bold text-[#17324D]">Certificate record not found</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">No prototype certificate record matches “{query}”. Check the demo reference and try again.</p></section>)}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        Department of Legal Metrology • Government of India Digital Portal
-      </footer>
+      <footer className="border-t border-slate-200 bg-white py-5 text-center text-xs text-slate-500">AccuMate · Prototype Digital Legal Metrology Verification & Certification Platform</footer>
     </div>
   );
 };
+
+const CertificateResult: React.FC<{ certificate: DigitalCertificate }> = ({ certificate }) => {
+  const valid = certificate.status === 'VALID';
+  const expired = certificate.status === 'EXPIRED';
+  return <section className="overflow-hidden border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 bg-[#EAF3FB] px-5 py-4"><div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1558A6]">DEMO / PROTOTYPE</div><h2 className="mt-1 font-mono text-base font-bold text-[#17324D]">{certificate.certNo}</h2></div><div className="p-5 sm:p-7"><div className={`flex gap-3 border p-4 ${valid ? 'border-green-200 bg-green-50 text-[#1f6d3b]' : expired ? 'border-red-200 bg-red-50 text-[#9e2d2d]' : 'border-red-200 bg-red-50 text-[#9e2d2d]'}`}>{valid ? <CheckCircle2 className="mt-0.5 size-5 shrink-0" /> : <AlertTriangle className="mt-0.5 size-5 shrink-0" />}<div><div className="text-sm font-bold">{valid ? 'Certificate record found' : expired ? 'Certificate record found — expired' : 'Certificate record found — invalid'}</div><p className="mt-1 text-xs leading-5">This status reflects a prototype record only; it does not establish an official verification outcome.</p></div></div><dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2"><Detail label="Certificate number" value={certificate.certNo} mono /><Detail label="Verification status" value={certificate.status} /><Detail label="Instrument" value={`${certificate.instrumentCategory} · ${certificate.manufacturer} ${certificate.modelNumber}`} /><Detail label="Serial number" value={certificate.serialNumber} mono /><Detail label="Applicant / trader" value={certificate.ownerName} /><Detail label="Verification date" value={certificate.verificationDate} /><Detail label="Validity shown in demo" value={certificate.validUntilDate} /><Detail label="Prototype issuing role" value={certificate.issuingOfficerDesignation} /></dl><div className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">Fields displayed above are prototype fields. AccuMate does not present this document as an official Government-issued certificate.</div></div></section>;
+};
+
+const Detail: React.FC<{ label: string; value: string; mono?: boolean }> = ({ label, value, mono }) => <div><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">{label}</dt><dd className={`mt-1 text-sm font-medium text-[#17324D] ${mono ? 'font-mono' : ''}`}>{value}</dd></div>;

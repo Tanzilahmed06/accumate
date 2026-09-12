@@ -9,7 +9,6 @@ import {
   Building,
   Calendar,
   ShieldCheck,
-  Sparkles,
   Copy,
   Check,
 } from 'lucide-react';
@@ -163,7 +162,7 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-slate-800">₹{calculateFee(inst.category)}</div>
-                        <div className="text-[10px] text-slate-400">Government Fee</div>
+                        <div className="text-[10px] text-slate-400">Demo transaction amount</div>
                       </div>
                     </div>
                   ))}
@@ -172,7 +171,7 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
 
               {selectedInst && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
                     Selected <strong>{selectedInst.title}</strong> at {selectedInst.locationAddress}, {selectedInst.city}.
                   </span>
@@ -197,7 +196,7 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
                 >
                   <div className="font-bold text-slate-900 mb-1">Initial Verification & Stamping</div>
                   <div className="text-[11px] text-slate-500 font-normal">
-                    For new instruments or newly installed weighing & measuring equipment.
+                    A proposed AccuMate workflow option for this prototype record.
                   </div>
                 </div>
 
@@ -209,9 +208,9 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <div className="font-bold text-slate-900 mb-1">Periodic Re-verification</div>
+                  <div className="font-bold text-slate-900 mb-1">Re-verification</div>
                   <div className="text-[11px] text-slate-500 font-normal">
-                    Annual/Biannual mandatory re-stamping for existing active certificates.
+                    A proposed AccuMate workflow option for an existing prototype record.
                   </div>
                 </div>
               </div>
@@ -228,7 +227,7 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
                   />
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1">
-                  Legal Metrology Inspector will visit the site during working hours (9:30 AM - 5:30 PM).
+                  The selected date is a demo preference only; it does not confirm an official inspection appointment.
                 </div>
               </div>
             </div>
@@ -269,13 +268,13 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
           {/* STEP 4: MOCK FEE PAYMENT */}
           {step === 4 && (
             <div className="space-y-4">
-              <h4 className="text-sm font-bold text-slate-900 font-heading">Step 4: Verification Fee Payment (Mock Gateway)</h4>
+              <h4 className="text-sm font-bold text-slate-900 font-heading">Step 4: Demo Transaction</h4>
 
               <div className="p-4 bg-slate-900 text-white rounded-2xl flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-slate-400">Total Statutory Verification Fee</div>
+                  <div className="text-xs text-slate-400">Demo transaction amount</div>
                   <div className="text-2xl font-extrabold text-amber-400 font-heading">₹{currentFee}.00</div>
-                  <div className="text-[10px] text-slate-400">As per Legal Metrology Rules, Schedule-IX</div>
+                  <div className="text-[10px] text-slate-400">Prototype amount only — not an official fee</div>
                 </div>
                 <div className="text-right text-xs">
                   <div className="font-semibold">{selectedInst?.category}</div>
@@ -342,7 +341,7 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
               <div>
                 <h4 className="text-xl font-bold text-slate-900 font-heading">Application Submitted Successfully!</h4>
                 <p className="text-xs text-slate-500 mt-1">
-                  Your verification application has been assigned to Legal Metrology Inspector Vikramaditya Roy.
+                  A prototype application record has been created and assigned to Demo Officer.
                 </p>
               </div>
 
@@ -406,7 +405,7 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Pay ₹{currentFee} & Submit Application</span>
+                      <span>Complete demo transaction &amp; submit</span>
                     </>
                   )}
                 </button>

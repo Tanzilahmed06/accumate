@@ -18,12 +18,12 @@ import {
 } from './mockData';
 
 const KEYS = {
-  INSTRUMENTS: 'e_metro_instruments_v1',
-  APPLICATIONS: 'e_metro_applications_v1',
-  CERTIFICATES: 'e_metro_certificates_v1',
-  INSPECTIONS: 'e_metro_inspections_v1',
-  AUDIT_LOGS: 'e_metro_audit_logs_v1',
-  CURRENT_USER_ROLE: 'e_metro_user_role_v1',
+  INSTRUMENTS: 'accumate_instruments_v2',
+  APPLICATIONS: 'accumate_applications_v2',
+  CERTIFICATES: 'accumate_certificates_v2',
+  INSPECTIONS: 'accumate_inspections_v2',
+  AUDIT_LOGS: 'accumate_audit_logs_v2',
+  CURRENT_USER_ROLE: 'accumate_user_role_v2',
 };
 
 type StorageListener = () => void;
@@ -129,7 +129,7 @@ export const StorageService = {
     if (!inst) throw new Error('Instrument not found');
 
     const applications = this.getApplications();
-    const appNo = `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const appNo = `DEMO-APP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
     const newApp: VerificationApplication = {
@@ -146,7 +146,7 @@ export const StorageService = {
       submissionDate: dateStr,
       scheduledInspectionDate: preferredDate || '18 Sep 2026',
       assignedOfficerId: 'USR-OFFICER-102',
-      assignedOfficerName: 'Inspector Vikramaditya Roy',
+      assignedOfficerName: 'Demo Officer',
       feeAmount,
       paymentStatus: 'PAID',
       paymentTransactionId: `TXN-UPI-${Math.floor(100000000 + Math.random() * 900000000)}`,
@@ -158,11 +158,11 @@ export const StorageService = {
       timeline: [
         { title: 'Application Submitted', description: 'Application filed online by trader', timestamp: `${dateStr} 10:30 AM`, completed: true },
         { title: 'Documents Verified', description: 'Under document verification review', completed: false },
-        { title: 'Fee Paid', description: `Statutory fee ₹${feeAmount} paid`, timestamp: `${dateStr} 10:35 AM`, completed: true },
-        { title: 'Officer Assigned', description: 'Assigned to Inspector Vikramaditya Roy', completed: false },
+        { title: 'Fee Paid', description: `Demo payment record ₹${feeAmount} completed`, timestamp: `${dateStr} 10:35 AM`, completed: true },
+        { title: 'Officer Assigned', description: 'Assigned to Demo Officer', completed: false },
         { title: 'Inspection Scheduled', description: 'Scheduled field inspection', completed: false },
-        { title: 'Inspection Completed', description: 'LMO on-site tolerance testing', completed: false },
-        { title: 'Certificate Issued', description: 'Digital certificate issuance with QR Code', completed: false },
+        { title: 'Inspection Completed', description: 'Prototype inspection record pending', completed: false },
+        { title: 'Certificate Issued', description: 'Prototype certificate processing pending', completed: false },
       ],
     };
 
@@ -265,7 +265,7 @@ export const StorageService = {
 
     if (inspectionData.finalResult === 'PASS') {
       const validUntil = new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0];
-      const certNo = `LM-DEL-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+      const certNo = `DEMO-CERT-2026-${Math.floor(100000 + Math.random() * 900000)}`;
       const certsList = this.getCertificates();
 
       const hash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
@@ -286,10 +286,10 @@ export const StorageService = {
         verificationDate: todayISO,
         validUntilDate: validUntil,
         issuingOfficerName: inspectionData.officerName,
-        issuingOfficerDesignation: 'Senior Legal Metrology Officer (LMO)',
-        verificationAuthority: 'Department of Legal Metrology, Govt. of NCT of Delhi',
+        issuingOfficerDesignation: 'Prototype Issuing Role',
+        verificationAuthority: 'AccuMate prototype record',
         securityHash: hash,
-        qrCodeUrl: `https://e-metro.gov.in/verify?cert=${certNo}`,
+        qrCodeUrl: `https://accumate.example/verify?cert=${certNo}`,
         status: 'VALID',
       };
 

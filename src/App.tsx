@@ -25,13 +25,15 @@ import { PublicVerifyPage } from './components/PublicVerifyPage';
 import { ExpiryAlertsModal } from './components/ExpiryAlertsModal';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { TimelineModal } from './components/TimelineModal';
+import { PublicPortal } from './components/PublicPortal';
 
 export default function App() {
   // Authentication & Role state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentRole, setCurrentRole] = useState<UserRole>(() => StorageService.getCurrentRole());
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [isPublicRoute, setIsPublicRoute] = useState(false);
+  const [isPublicRoute, setIsPublicRoute] = useState(true);
+  const [isPublicVerifyRoute, setIsPublicVerifyRoute] = useState(false);
 
   // App data state synced with StorageService
   const [currentUser, setCurrentUser] = useState<User>(() => StorageService.getCurrentUser());
@@ -87,6 +89,7 @@ export default function App() {
     else if (newRole === 'admin') setActiveTab('admin-analytics');
 
     setIsPublicRoute(false);
+    setIsPublicVerifyRoute(false);
     setActiveInspectionApp(null);
   };
 
@@ -99,7 +102,8 @@ export default function App() {
   // Handle Logout
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setIsPublicRoute(false);
+    setIsPublicVerifyRoute(false);
+    setIsPublicRoute(true);
   };
 
   // Open Certificate Helper
@@ -113,19 +117,29 @@ export default function App() {
 
   // Open Public QR Verification Page
   const handleOpenPublicVerify = (certNo?: string) => {
-    setPublicSearchCertNo(certNo || 'LM-CERT-2025-9011');
-    setIsPublicRoute(true);
+    setPublicSearchCertNo(certNo || 'DEMO-CERT-2026-001');
+    setIsPublicRoute(false);
+    setIsPublicVerifyRoute(true);
     setIsCertModalOpen(false);
   };
 
-  // If Public Verification route is active
-  if (isPublicRoute) {
+  if (isPublicVerifyRoute) {
     return (
       <PublicVerifyPage
         initialCertNo={publicSearchCertNo}
         onBackToApp={() => {
-          setIsPublicRoute(false);
+          setIsPublicVerifyRoute(false);
+          setIsPublicRoute(true);
         }}
+      />
+    );
+  }
+
+  if (isPublicRoute) {
+    return (
+      <PublicPortal
+        onLogin={() => setIsPublicRoute(false)}
+        onOpenVerify={handleOpenPublicVerify}
       />
     );
   }

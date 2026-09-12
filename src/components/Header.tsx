@@ -48,10 +48,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 font-semibold text-slate-300">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            GOVERNMENT OF INDIA
+            ACCUMATE PROTOTYPE WORKSPACE
           </span>
           <span className="hidden sm:inline text-slate-600">|</span>
-          <span className="hidden sm:inline">Department of Legal Metrology, Ministry of Consumer Affairs</span>
+          <span className="hidden sm:inline">Digital Legal Metrology Verification &amp; Certification Platform</span>
         </div>
         <div className="flex items-center gap-4">
           <button
@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => StorageService.resetAllData()}
             className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title="Reset Mock Data"
+            title="Reset demo data"
           >
             <RefreshCw className="w-3 h-3" />
             <span className="hidden md:inline">Reset Demo</span>
@@ -77,22 +77,22 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="px-4 py-3 flex items-center justify-between gap-4">
         {/* Brand & Portal Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-500 p-0.5 shadow-md flex items-center justify-center">
-            <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6 text-amber-400" />
+          <div className="w-10 h-10 border border-blue-300 bg-[#1558A6] shadow-md flex items-center justify-center">
+            <div className="w-full h-full bg-[#17324D] flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-white" />
             </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight text-white font-heading">
-                e-Metro
+                AccuMate
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 tracking-wider">
-                LEGAL METROLOGY
+              <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-500/20 text-blue-200 border border-blue-400/30 tracking-wider">
+                DEMO PLATFORM
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
-              Digital Verification & Certification Infrastructure
+              Digital Legal Metrology Verification &amp; Certification Platform
             </p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Quick QR Verify Button */}
           <button
             onClick={onOpenVerify}
-            className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition-all cursor-pointer"
+            className="hidden sm:flex items-center gap-2 bg-[#1558A6] hover:bg-[#104986] text-white text-xs font-semibold px-3 py-2 shadow-sm transition-all cursor-pointer"
           >
             <QrCode className="w-4 h-4" />
             <span>Verify QR</span>

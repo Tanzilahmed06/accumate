@@ -78,7 +78,7 @@ export const GovtHeader: React.FC<GovtHeaderProps> = ({
 
           <div className="flex items-center gap-1.5 font-bold tracking-wide text-slate-200">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>GOVERNMENT OF INDIA</span>
+            <span>ACCUMATE PROTOTYPE</span>
           </div>
 
           <span className="text-slate-700 hidden sm:inline">|</span>
@@ -169,14 +169,14 @@ export const GovtHeader: React.FC<GovtHeaderProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold font-heading text-white tracking-tight">
-                e-Metro
+                AccuMate
               </h1>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700 tracking-wider uppercase">
                 Legal Metrology
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden sm:block">
-              Digital Verification & Certification Infrastructure
+              Prototype Digital Legal Metrology Workflow Platform
             </p>
           </div>
         </div>
@@ -324,7 +324,7 @@ export const GovtHeader: React.FC<GovtHeaderProps> = ({
       {/* 3. PUBLIC WEBSITE MAIN NAVIGATION MENU */}
       <nav className="bg-slate-950 px-4 py-1.5 border-b border-slate-800 flex items-center gap-1 overflow-x-auto custom-scrollbar text-xs">
         <PublicNavButton id="home" label="Home" active={activePublicTab === 'home'} onClick={() => onSelectPublicTab('home')} />
-        <PublicNavButton id="about" label="About e-Metro" active={activePublicTab === 'about'} onClick={() => onSelectPublicTab('about')} />
+        <PublicNavButton id="about" label="About AccuMate" active={activePublicTab === 'about'} onClick={() => onSelectPublicTab('about')} />
         <PublicNavButton id="services" label="Legal Metrology Services" active={activePublicTab === 'services'} onClick={() => onSelectPublicTab('services')} />
         <PublicNavButton id="verification" label="Public Certificate Verification" active={activePublicTab === 'verification'} onClick={() => onSelectPublicTab('verification')} />
         <PublicNavButton id="track" label="Track Application" active={activePublicTab === 'track'} onClick={() => onSelectPublicTab('track')} />

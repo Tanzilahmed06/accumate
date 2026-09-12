@@ -55,7 +55,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
       state,
       purchaseDate,
       ownerId: 'USR-TRADER-001',
-      ownerName: 'Apex Logistics & Grain Mills Pvt Ltd',
+      ownerName: 'Sample Trader',
       ownerEmail: 'trader@demo.com',
       ownerPhone: '+91 98765 43210',
       status: 'REGISTERED',
@@ -79,7 +79,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
             </div>
             <div>
               <h3 className="font-bold text-lg font-heading">Register Weighing / Measuring Instrument</h3>
-              <p className="text-xs text-slate-400">Legal Metrology Act, 2009 Digital Registry Form</p>
+              <p className="text-xs text-slate-400">Prototype instrument registration form · demo data</p>
             </div>
           </div>
           <button

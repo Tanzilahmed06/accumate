@@ -61,13 +61,13 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
           <div>
             <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700">
               <span className="h-1.5 w-1.5 bg-blue-700"></span>
-              TRADER DASHBOARD & PORTFOLIO
+              TRADER WORKSPACE · DEMO DATA
             </div>
             <h2 className="font-heading text-[26px] font-semibold tracking-tight text-slate-900">
-              Apex Logistics & Grain Mills Pvt Ltd
+              Sample Trader
             </h2>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">
-              Manage your weighing & measuring equipment portfolio, apply for digital verification under Legal Metrology rules, and download authenticated QR certificates.
+              Manage prototype instrument records, proposed verification applications and clearly labelled demo certificate records.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
