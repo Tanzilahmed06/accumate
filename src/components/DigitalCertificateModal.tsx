@@ -40,7 +40,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onVerifyQR(certificate.certNo)}
+              onClick={() => onVerifyQR(verificationReference)}
               className="px-3 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-semibold rounded-lg border border-amber-500/40 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <QrCode className="w-3.5 h-3.5" />
@@ -147,7 +147,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
             </div>
 
             {/* Dates & QR Code Section */}
-            <div className="grid grid-cols-3 gap-4 items-center bg-white p-4 rounded-2xl border border-slate-200">
+            <div className="grid grid-cols-1 gap-5 border border-slate-300 bg-white p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
               <div>
                 <div className="font-bold text-slate-500 uppercase text-[10px]">Verification Date</div>
                 <div className="text-sm font-extrabold text-slate-900">{certificate.verificationDate}</div>
@@ -159,15 +159,20 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               </div>
 
               {/* Dynamic QR Code */}
-              <div className="flex flex-col items-center justify-center border-l border-slate-200 pl-4">
-                <div className="p-2 bg-white rounded-xl border border-slate-300 shadow-sm">
+              <div className="flex flex-col items-center justify-center border-t border-slate-200 pt-5 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
+                <div className="border-2 border-slate-900 bg-white p-3">
                   <QRCodeSVG
                     value={verificationUrl}
-                    size={80}
+                    size={144}
                     level="H"
+                    bgColor="#FFFFFF"
+                    fgColor="#0F172A"
+                    marginSize={4}
+                    title={`Verification QR code for certificate ${certificate.certNo}`}
                   />
                 </div>
-                <div className="text-[9px] font-mono text-slate-500 mt-1">Scan to verify this certificate</div>
+                <div className="mt-3 text-center text-[10px] font-semibold text-slate-700">Scan to verify this certificate</div>
+                <div className="mt-1 text-center text-[9px] font-mono text-slate-500">Ref: {certificate.certNo}</div>
               </div>
             </div>
 

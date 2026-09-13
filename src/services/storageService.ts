@@ -403,7 +403,7 @@ function getAnalyticsStats(): AnalyticsStats {
 function parseVerificationReference(value: string) {
   const trimmed = value.trim();
   try {
-    const url = new URL(trimmed);
+    const url = new URL(trimmed, 'https://verification.accumate.local');
     return url.searchParams.get('id') || url.searchParams.get('cert') || trimmed;
   } catch {
     return trimmed;
@@ -808,7 +808,7 @@ export const StorageService = {
   },
 
   assignOfficer(appId: string, officerId: string, remarks?: string) {
-    const application = getApplicationForUpdate(appId);
+    getApplicationForUpdate(appId);
     if (getCurrentUser().role !== 'admin') throw new Error('Only a department administrator can assign field officers.');
     const officer = getPlatformUsersRecord()[officerId];
     if (!officer || officer.role !== 'officer' || officer.status !== 'ACTIVE') {
@@ -916,6 +916,7 @@ export const StorageService = {
       ownerAddress: profile ? `${profile.addressLine1}, ${profile.city}, ${profile.state} ${profile.pinCode}` : instrument?.locationAddress || '',
       businessName: profile?.businessName || application.ownerName,
       merchantId: profile?.merchantId || application.merchantId,
+      instrumentName: application.instrumentTitle,
       instrumentCategory: application.category,
       manufacturer: instrument?.manufacturer || '',
       modelNumber: instrument?.modelNumber || '',

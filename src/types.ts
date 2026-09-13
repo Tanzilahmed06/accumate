@@ -243,6 +243,7 @@ export interface DigitalCertificate {
   ownerAddress: string;
   businessName?: string;
   merchantId?: string;
+  instrumentName?: string;
   instrumentCategory: InstrumentCategory;
   manufacturer: string;
   modelNumber: string;

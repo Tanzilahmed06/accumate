@@ -154,7 +154,7 @@ export default function App() {
     setIsCertModalOpen(false);
   };
 
-  if (!isSplashComplete) {
+  if (!isSplashComplete && !isPublicVerifyRoute) {
     return <SplashLoader onComplete={() => setIsSplashComplete(true)} />;
   }
 

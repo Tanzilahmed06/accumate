@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Eye, Plus, Search, ShieldCheck, Users } from 'lucide-react';
+import { CheckCircle2, Eye, Plus, Search } from 'lucide-react';
 import type { AnalyticsStats, AuditLog, BusinessProfile, DigitalCertificate, PlatformUser, VerificationApplication } from '../types';
 import { StorageService } from '../services/storageService';
 import { AppStatusBadge } from './TraderDashboard';
