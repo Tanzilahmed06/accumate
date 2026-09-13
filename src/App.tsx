@@ -9,6 +9,7 @@ import type {
   AuditLog,
   ExpiryAlert,
   AnalyticsStats,
+  PlatformUser,
 } from './types';
 import { StorageService, subscribeStorage } from './services/storageService';
 import { Header } from './components/Header';
@@ -50,6 +51,9 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => StorageService.getAuditLogs());
   const [expiryAlerts, setExpiryAlerts] = useState<ExpiryAlert[]>(() => StorageService.getExpiryAlerts());
   const [stats, setStats] = useState<AnalyticsStats>(() => StorageService.getAnalyticsStats());
+  const [platformUsers, setPlatformUsers] = useState<PlatformUser[]>(() => StorageService.getUsers());
+  const [testCenters, setTestCenters] = useState<PlatformUser[]>(() => StorageService.getAssignableTestCenters());
+  const [businessProfiles, setBusinessProfiles] = useState<BusinessProfile[]>(() => StorageService.getBusinessProfiles());
 
   // Active Modals & Selected items state
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -77,6 +81,9 @@ export default function App() {
     setAuditLogs(StorageService.getAuditLogs());
     setExpiryAlerts(StorageService.getExpiryAlerts());
     setStats(StorageService.getAnalyticsStats());
+    setPlatformUsers(StorageService.getUsers());
+    setTestCenters(StorageService.getAssignableTestCenters());
+    setBusinessProfiles(StorageService.getBusinessProfiles());
   };
 
   useEffect(() => {
@@ -104,12 +111,13 @@ export default function App() {
   };
 
   // Handle Login Success
-  const handleLoginSuccess = (role: UserRole, identity: { email: string; mobile: string }) => {
+  const handleLoginSuccess = async (role: UserRole, identity: { email: string; mobile: string }) => {
     const user = StorageService.authenticateUser({ role, ...identity });
     setCurrentUser(user);
     handleRoleChange(role);
     setShowOnboarding(role === 'trader' && !StorageService.isOnboardingCompleted());
     setIsAuthenticated(true);
+    refreshData();
   };
 
   const handleLoadDemoWorkspace = () => {
@@ -205,7 +213,6 @@ export default function App() {
       {/* Top Government Navigation Header */}
       <Header
         currentUser={currentUser}
-        onRoleChange={handleRoleChange}
         onOpenSearch={() => setIsSearchModalOpen(true)}
         onOpenVerify={() => handleOpenPublicVerify()}
         onOpenExpiryAlerts={() => setIsExpiryModalOpen(true)}
@@ -277,9 +284,10 @@ export default function App() {
               ) : (
                 <OfficerDashboard
                   applications={applications}
-                  instruments={instruments}
+                  testCenters={testCenters}
                   onStartInspection={(app) => setActiveInspectionApp(app)}
                   onViewCertificate={handleViewCertificate}
+                  onRefresh={refreshData}
                 />
               )}
             </>
@@ -293,9 +301,15 @@ export default function App() {
           {/* ADMIN ROLE VIEWS */}
           {currentRole === 'admin' && (
             <AdminAnalyticsDashboard
+              activeTab={activeTab}
               stats={stats}
               auditLogs={auditLogs}
+              users={platformUsers}
+              applications={applications}
+              certificates={certificates}
+              businessProfiles={businessProfiles}
               onViewCertificate={handleViewCertificate}
+              onRefresh={refreshData}
             />
           )}
         </main>

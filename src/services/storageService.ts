@@ -7,9 +7,12 @@ import type {
   InspectionRecord,
   Instrument,
   Merchant,
+  PlatformUser,
   User,
   UserRole,
   VerificationApplication,
+  ApplicationStatus,
+  ApplicationStatusHistory,
 } from '../types';
 import {
   DEMO_USERS,
@@ -26,9 +29,11 @@ const CURRENT_USER_ROLE_KEY = `${KEY_PREFIX}_user_role_v3`;
 const CURRENT_USER_KEY = `${KEY_PREFIX}_current_user_v1`;
 const DEMO_MODE_KEY = `${KEY_PREFIX}_demo_mode_v1`;
 const MERCHANTS_KEY = `${KEY_PREFIX}_merchants_v3`;
+const PLATFORM_USERS_KEY = `${KEY_PREFIX}_platform_users_v1`;
 
 type StorageListener = () => void;
 type ScopedRecord = Instrument | VerificationApplication | DigitalCertificate | AuditLog;
+type ManagedUserRole = Exclude<UserRole, 'public'>;
 
 const listeners: StorageListener[] = [];
 
@@ -111,6 +116,50 @@ function displayDate(date = new Date()) {
 
 function getStoredProfile(userId: string): BusinessProfile | undefined {
   return readValue<BusinessProfile | undefined>(profileKey(userId), undefined);
+}
+
+function getPlatformUsersRecord(): Record<string, PlatformUser> {
+  return readValue<Record<string, PlatformUser>>(PLATFORM_USERS_KEY, {});
+}
+
+function writePlatformUsers(users: Record<string, PlatformUser>) {
+  writeValue(PLATFORM_USERS_KEY, users);
+}
+
+function toPlatformUser(user: User, existing?: PlatformUser): PlatformUser {
+  const now = new Date().toISOString();
+  return {
+    ...existing,
+    ...user,
+    role: user.role as ManagedUserRole,
+    status: existing?.status || 'ACTIVE',
+    createdAt: existing?.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+function findPlatformUserByIdentity(users: Record<string, PlatformUser>, email: string, mobile: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedMobile = mobile.replace(/\D/g, '');
+  return Object.values(users).find((user) =>
+    (normalizedEmail && user.email.trim().toLowerCase() === normalizedEmail)
+    || (normalizedMobile && user.phone?.replace(/\D/g, '') === normalizedMobile),
+  );
+}
+
+function getAllBusinessProfiles(): BusinessProfile[] {
+  const keyStart = `${KEY_PREFIX}_business_`;
+  const profiles: BusinessProfile[] = [];
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(keyStart)) {
+      const profile = readValue<BusinessProfile | undefined>(key, undefined);
+      if (profile) profiles.push(profile);
+    }
+  }
+
+  return profiles;
 }
 
 function getRecordsForUser<T>(collection: string, userId: string): T[] {
@@ -231,30 +280,41 @@ function generateMerchantId(state: string) {
 
 function getInstruments(): Instrument[] {
   const user = getCurrentUser();
-  return user.role === 'trader'
-    ? getRecordsForUser<Instrument>('instruments', user.id)
-    : getAllScopedRecords<Instrument>('instruments');
+  if (user.role === 'trader') return getRecordsForUser<Instrument>('instruments', user.id);
+  if (user.role === 'admin') return getAllScopedRecords<Instrument>('instruments');
+
+  const visibleInstrumentIds = new Set(getApplications().map((application) => application.instrumentId));
+  return getAllScopedRecords<Instrument>('instruments').filter((instrument) => visibleInstrumentIds.has(instrument.id));
 }
 
 function getApplications(): VerificationApplication[] {
   const user = getCurrentUser();
-  return user.role === 'trader'
-    ? getRecordsForUser<VerificationApplication>('applications', user.id)
-    : getAllScopedRecords<VerificationApplication>('applications');
+  if (user.role === 'trader') return getRecordsForUser<VerificationApplication>('applications', user.id);
+
+  const applications = getAllScopedRecords<VerificationApplication>('applications');
+  if (user.role === 'officer') {
+    return applications.filter((application) => !application.assignedOfficerId || application.assignedOfficerId === user.id);
+  }
+  if (user.role === 'gatc') {
+    return applications.filter((application) => application.assignedGATCId === user.id);
+  }
+  return user.role === 'admin' ? applications : [];
 }
 
 function getCertificates(): DigitalCertificate[] {
   const user = getCurrentUser();
-  return user.role === 'trader'
-    ? getRecordsForUser<DigitalCertificate>('certificates', user.id)
-    : getAllScopedRecords<DigitalCertificate>('certificates');
+  if (user.role === 'trader') return getRecordsForUser<DigitalCertificate>('certificates', user.id);
+  if (user.role === 'admin') return getAllScopedRecords<DigitalCertificate>('certificates');
+
+  const visibleApplicationIds = new Set(getApplications().map((application) => application.id));
+  return getAllScopedRecords<DigitalCertificate>('certificates').filter((certificate) => visibleApplicationIds.has(certificate.applicationId));
 }
 
 function getAuditLogs(): AuditLog[] {
   const user = getCurrentUser();
-  return user.role === 'trader'
-    ? getRecordsForUser<AuditLog>('audit_logs', user.id)
-    : getAllScopedRecords<AuditLog>('audit_logs');
+  return user.role === 'admin'
+    ? getAllScopedRecords<AuditLog>('audit_logs')
+    : getRecordsForUser<AuditLog>('audit_logs', user.id);
 }
 
 function addAuditLog(action: string, details: string, targetId: string) {
@@ -309,16 +369,31 @@ function getExpiryAlerts(): ExpiryAlert[] {
 }
 
 function getAnalyticsStats(): AnalyticsStats {
-  const applications = getApplications();
+  const user = getCurrentUser();
+  const applications = user.role === 'admin'
+    ? getAllScopedRecords<VerificationApplication>('applications')
+    : getApplications();
+  const instruments = user.role === 'admin'
+    ? getAllScopedRecords<Instrument>('instruments')
+    : getInstruments();
+  const certificates = user.role === 'admin'
+    ? getAllScopedRecords<DigitalCertificate>('certificates')
+    : getCertificates();
   const alerts = getExpiryAlerts();
-  const pendingApplications = applications.filter((application) => !['CERTIFICATE_GENERATED', 'REJECTED'].includes(application.status)).length;
+  const users = Object.values(getPlatformUsersRecord());
+  const pendingApplications = applications.filter((application) => !['COMPLETED', 'CERTIFICATE_GENERATED', 'REJECTED'].includes(application.status)).length;
 
   return {
-    totalInstruments: getInstruments().length,
+    totalTraders: users.filter((platformUser) => platformUser.role === 'trader').length,
+    totalOfficers: users.filter((platformUser) => platformUser.role === 'officer').length,
+    totalTestCenters: users.filter((platformUser) => platformUser.role === 'gatc').length,
+    totalInstruments: instruments.length,
     totalApplications: applications.length,
     pendingApplications,
-    completedVerifications: applications.filter((application) => application.status === 'CERTIFICATE_GENERATED').length,
+    underReviewApplications: applications.filter((application) => application.status === 'UNDER_REVIEW').length,
+    completedVerifications: applications.filter((application) => ['VERIFIED', 'COMPLETED', 'CERTIFICATE_GENERATED'].includes(application.status)).length,
     rejectedApplications: applications.filter((application) => application.status === 'REJECTED').length,
+    activeCertificates: certificates.filter((certificate) => certificate.status === 'VALID').length,
     expiringCertificates: alerts.filter((alert) => alert.severity !== 'EXPIRED').length,
     expiredCertificates: alerts.filter((alert) => alert.severity === 'EXPIRED').length,
     totalRevenue: 0,
@@ -333,6 +408,98 @@ function parseVerificationReference(value: string) {
   } catch {
     return trimmed;
   }
+}
+
+const statusLabels: Record<ApplicationStatus, string> = {
+  DRAFT: 'Draft',
+  SUBMITTED: 'Submitted',
+  UNDER_REVIEW: 'Under review',
+  ASSIGNED: 'Assigned',
+  DOCUMENTS_VERIFIED: 'Documents verified',
+  OFFICER_ASSIGNED: 'Officer assigned',
+  INSPECTION_SCHEDULED: 'Inspection scheduled',
+  INSPECTION_IN_PROGRESS: 'Inspection in progress',
+  INSPECTION_COMPLETED: 'Inspection completed',
+  VERIFIED: 'Verified',
+  COMPLETED: 'Completed',
+  CERTIFICATE_GENERATED: 'Certificate generated',
+  REJECTED: 'Rejected',
+};
+
+function verificationStatusFor(status: ApplicationStatus): VerificationApplication['verificationStatus'] {
+  if (status === 'REJECTED') return 'REJECTED';
+  if (status === 'VERIFIED') return 'VERIFIED';
+  if (status === 'COMPLETED' || status === 'CERTIFICATE_GENERATED') return 'COMPLETED';
+  if (status === 'INSPECTION_IN_PROGRESS' || status === 'INSPECTION_COMPLETED') return 'IN_PROGRESS';
+  return 'PENDING';
+}
+
+function getApplicationForUpdate(appId: string): VerificationApplication {
+  const application = getAllScopedRecords<VerificationApplication>('applications').find((item) => item.id === appId);
+  if (!application) throw new Error('Application not found.');
+  return application;
+}
+
+function assertWorkflowAccess(application: VerificationApplication, allowedRoles: ManagedUserRole[]) {
+  if (isDemoMode()) return;
+  const actor = getCurrentUser();
+  if (!allowedRoles.includes(actor.role as ManagedUserRole)) throw new Error('Your role is not authorized for this workflow action.');
+  if (actor.role === 'officer' && application.assignedOfficerId && application.assignedOfficerId !== actor.id) {
+    throw new Error('This application is assigned to another field officer.');
+  }
+  if (actor.role === 'gatc' && application.assignedGATCId !== actor.id) {
+    throw new Error('This application is not assigned to your test center.');
+  }
+}
+
+function saveWorkflowUpdate(
+  appId: string,
+  status: ApplicationStatus,
+  action: string,
+  remarks?: string,
+  updates: Partial<VerificationApplication> = {},
+): VerificationApplication {
+  const application = getApplicationForUpdate(appId);
+  const ownerApplications = getRecordsForUser<VerificationApplication>('applications', application.ownerId);
+  const index = ownerApplications.findIndex((item) => item.id === appId);
+  if (index < 0) throw new Error('Application record could not be updated.');
+
+  const actor = getCurrentUser();
+  const timestamp = new Date().toISOString();
+  const history: ApplicationStatusHistory = {
+    id: `HIST-${crypto.randomUUID()}`,
+    previousStatus: application.status,
+    newStatus: status,
+    changedById: actor.id,
+    changedByName: actor.name,
+    changedByRole: actor.role,
+    remarks: remarks || undefined,
+    timestamp,
+  };
+  const timeline = [
+    ...application.timeline.map((step) => ({ ...step, current: false })),
+    {
+      title: statusLabels[status],
+      description: remarks || `${statusLabels[status]} by ${actor.name}.`,
+      timestamp: displayDate(),
+      completed: true,
+    },
+  ];
+  const updated: VerificationApplication = {
+    ...application,
+    ...updates,
+    status,
+    verificationStatus: verificationStatusFor(status),
+    updatedAt: timestamp,
+    statusHistory: [...(application.statusHistory || []), history],
+    timeline,
+  };
+
+  ownerApplications[index] = updated;
+  setRecordsForUser('applications', application.ownerId, ownerApplications);
+  addAuditLog(action, `${application.applicationNo}: ${remarks || statusLabels[status]}`, application.id);
+  notifyListeners();
+  return updated;
 }
 
 export function subscribeStorage(listener: StorageListener) {
@@ -361,12 +528,83 @@ export const StorageService = {
   getCurrentUser,
 
   authenticateUser({ role, email, mobile }: { role: UserRole; email: string; mobile: string }) {
-    const user = createAuthenticatedUser(role, email, mobile);
+    if (role === 'public') throw new Error('Public users cannot sign in to a workspace.');
+    const requestedUser = createAuthenticatedUser(role, email, mobile);
+    const users = getPlatformUsersRecord();
+    const existing = users[requestedUser.id] || findPlatformUserByIdentity(users, email, mobile);
+    if (existing && existing.role !== role) throw new Error('This account is registered for a different workspace role.');
+    if (existing?.status === 'INACTIVE') throw new Error('This account has been deactivated. Contact a department administrator.');
+
+    const user = toPlatformUser(existing ? { ...requestedUser, id: existing.id } : requestedUser, existing);
+    users[user.id] = user;
+    writePlatformUsers(users);
     writeValue(CURRENT_USER_KEY, user);
     localStorage.setItem(CURRENT_USER_ROLE_KEY, role);
     localStorage.removeItem(DEMO_MODE_KEY);
     notifyListeners();
     return user;
+  },
+
+  createUserProfile(profile: Pick<PlatformUser, 'role' | 'name' | 'email'> & Partial<PlatformUser>) {
+    if (getCurrentUser().role !== 'admin') throw new Error('Only a department administrator can create platform profiles.');
+    if (!profile.email.trim()) throw new Error('An email address is required to create a platform profile.');
+    const users = getPlatformUsersRecord();
+    if (findPlatformUserByIdentity(users, profile.email, profile.phone || '')) {
+      throw new Error('A platform profile already exists for this email or mobile number.');
+    }
+    const baseUser = createAuthenticatedUser(profile.role, profile.email, profile.phone || '');
+    const now = new Date().toISOString();
+    const user: PlatformUser = {
+      ...toPlatformUser(baseUser),
+      ...profile,
+      id: baseUser.id,
+      status: profile.status || 'ACTIVE',
+      createdAt: now,
+      updatedAt: now,
+    };
+    users[user.id] = user;
+    writePlatformUsers(users);
+    addAuditLog('USER_PROFILE_CREATED', `Created ${user.role} profile for ${user.name}`, user.id);
+    notifyListeners();
+    return user;
+  },
+
+  getUsers() {
+    return getCurrentUser().role === 'admin'
+      ? Object.values(getPlatformUsersRecord()).sort((first, second) => first.name.localeCompare(second.name))
+      : [];
+  },
+
+  getAssignableTestCenters() {
+    return Object.values(getPlatformUsersRecord())
+      .filter((user) => user.role === 'gatc' && user.status === 'ACTIVE')
+      .sort((first, second) => (first.centerName || first.name).localeCompare(second.centerName || second.name));
+  },
+
+  getBusinessProfiles() {
+    const user = getCurrentUser();
+    if (user.role === 'admin') return getAllBusinessProfiles();
+    return user.role === 'trader' ? [getStoredProfile(user.id)].filter((profile): profile is BusinessProfile => Boolean(profile)) : [];
+  },
+
+  updateUserProfile(userId: string, changes: Omit<Partial<PlatformUser>, 'id' | 'createdAt' | 'updatedAt'>) {
+    if (getCurrentUser().role !== 'admin') throw new Error('Only a department administrator can manage platform profiles.');
+    const users = getPlatformUsersRecord();
+    const existing = users[userId];
+    if (!existing) throw new Error('User profile not found.');
+    if (userId === getCurrentUser().id && changes.status === 'INACTIVE') throw new Error('You cannot deactivate your own active administrator profile.');
+
+    const updated: PlatformUser = {
+      ...existing,
+      ...changes,
+      updatedAt: new Date().toISOString(),
+    };
+    users[userId] = updated;
+    writePlatformUsers(users);
+    if (userId === getCurrentUser().id) writeValue(CURRENT_USER_KEY, updated);
+    addAuditLog('USER_PROFILE_UPDATED', `Updated ${updated.name}'s ${updated.role} profile`, userId);
+    notifyListeners();
+    return updated;
   },
 
   isDemoMode,
@@ -437,6 +675,22 @@ export const StorageService = {
       writeValue(MERCHANTS_KEY, merchants);
     }
 
+    const users = getPlatformUsersRecord();
+    const platformUser = users[profile.userId];
+    if (platformUser) {
+      users[profile.userId] = {
+        ...platformUser,
+        name: savedProfile.contactName,
+        email: savedProfile.email,
+        phone: savedProfile.mobile,
+        organization: savedProfile.businessName,
+        designation: savedProfile.designation,
+        updatedAt: now,
+      };
+      writePlatformUsers(users);
+      if (getCurrentUser().id === profile.userId) writeValue(CURRENT_USER_KEY, users[profile.userId]);
+    }
+
     addAuditLog(existing ? 'BUSINESS_PROFILE_UPDATED' : 'BUSINESS_PROFILE_CREATED', `Business profile saved for ${savedProfile.businessName}`, savedProfile.id);
     notifyListeners();
     return savedProfile;
@@ -479,8 +733,13 @@ export const StorageService = {
     if (!instrument) throw new Error('Instrument not found for this account.');
 
     const profile = getStoredProfile(user.id);
-    const applicationNo = `APP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const stateCode = profile?.stateCode || 'IN';
+    const year = new Date().getFullYear();
+    const sequence = getAllScopedRecords<VerificationApplication>('applications')
+      .filter((application) => application.applicationNo.startsWith(`APP-${stateCode}-${year}-`)).length + 1;
+    const applicationNo = `APP-${stateCode}-${year}-${String(sequence).padStart(4, '0')}`;
     const submissionDate = displayDate();
+    const createdAt = new Date().toISOString();
     const application: VerificationApplication = {
       id: `APP-${crypto.randomUUID()}`,
       applicationNo,
@@ -498,6 +757,19 @@ export const StorageService = {
       feeAmount,
       paymentStatus: 'PENDING',
       status: 'SUBMITTED',
+      verificationStatus: 'PENDING',
+      updatedAt: createdAt,
+      statusHistory: [
+        {
+          id: `HIST-${crypto.randomUUID()}`,
+          newStatus: 'SUBMITTED',
+          changedById: user.id,
+          changedByName: user.name,
+          changedByRole: user.role,
+          remarks: 'Application submitted.',
+          timestamp: createdAt,
+        },
+      ],
       documents: {},
       timeline: [
         { title: 'Application submitted', description: 'Your application has been recorded in AccuMate.', timestamp: submissionDate, completed: true },
@@ -515,21 +787,90 @@ export const StorageService = {
   },
 
   updateApplicationStatus(appId: string, status: VerificationApplication['status'], rejectionReason?: string, officerName?: string, scheduledDate?: string) {
-    const application = getAllScopedRecords<VerificationApplication>('applications').find((item) => item.id === appId);
-    if (!application) return;
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['officer', 'gatc', 'admin']);
+    return saveWorkflowUpdate(appId, status, 'APPLICATION_STATUS_UPDATED', rejectionReason, {
+      rejectionReason: rejectionReason || application.rejectionReason,
+      assignedOfficerName: officerName || application.assignedOfficerName,
+      scheduledInspectionDate: scheduledDate || application.scheduledInspectionDate,
+    });
+  },
 
-    const applications = getRecordsForUser<VerificationApplication>('applications', application.ownerId);
-    const index = applications.findIndex((item) => item.id === appId);
-    if (index < 0) return;
-    applications[index] = {
-      ...applications[index],
-      status,
-      rejectionReason: rejectionReason || applications[index].rejectionReason,
-      assignedOfficerName: officerName || applications[index].assignedOfficerName,
-      scheduledInspectionDate: scheduledDate || applications[index].scheduledInspectionDate,
-    };
-    setRecordsForUser('applications', application.ownerId, applications);
-    notifyListeners();
+  startReview(appId: string, reviewNotes?: string) {
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['officer', 'admin']);
+    const actor = getCurrentUser();
+    return saveWorkflowUpdate(appId, 'UNDER_REVIEW', 'APPLICATION_REVIEW_STARTED', reviewNotes || 'Field officer started the application review.', {
+      assignedOfficerId: application.assignedOfficerId || actor.id,
+      assignedOfficerName: application.assignedOfficerName || actor.name,
+      reviewNotes: reviewNotes || application.reviewNotes,
+    });
+  },
+
+  assignOfficer(appId: string, officerId: string, remarks?: string) {
+    const application = getApplicationForUpdate(appId);
+    if (getCurrentUser().role !== 'admin') throw new Error('Only a department administrator can assign field officers.');
+    const officer = getPlatformUsersRecord()[officerId];
+    if (!officer || officer.role !== 'officer' || officer.status !== 'ACTIVE') {
+      throw new Error('Select an active field officer.');
+    }
+    return saveWorkflowUpdate(appId, 'ASSIGNED', 'FIELD_OFFICER_ASSIGNED', remarks || `Assigned to ${officer.name}.`, {
+      assignedOfficerId: officer.id,
+      assignedOfficerName: officer.name,
+    });
+  },
+
+  scheduleInspection(appId: string, inspectionDate: string, remarks?: string) {
+    if (!inspectionDate) throw new Error('Choose an inspection date before saving.');
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['officer', 'admin']);
+    const actor = getCurrentUser();
+    return saveWorkflowUpdate(appId, 'INSPECTION_SCHEDULED', 'INSPECTION_SCHEDULED', remarks || `Inspection scheduled for ${inspectionDate}.`, {
+      assignedOfficerId: application.assignedOfficerId || actor.id,
+      assignedOfficerName: application.assignedOfficerName || actor.name,
+      scheduledInspectionDate: inspectionDate,
+      reviewNotes: remarks || application.reviewNotes,
+    });
+  },
+
+  assignTestCenter(appId: string, testCenterId: string, remarks?: string) {
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['officer', 'admin']);
+    const testCenter = getPlatformUsersRecord()[testCenterId];
+    if (!testCenter || testCenter.role !== 'gatc' || testCenter.status !== 'ACTIVE') {
+      throw new Error('Select an active test center.');
+    }
+    return saveWorkflowUpdate(appId, 'ASSIGNED', 'TEST_CENTER_ASSIGNED', remarks || `Assigned to ${testCenter.centerName || testCenter.name}.`, {
+      assignedGATCId: testCenter.id,
+      assignedGATCName: testCenter.centerName || testCenter.name,
+      assignedTestCenterAt: new Date().toISOString(),
+    });
+  },
+
+  beginTestCenterWork(appId: string) {
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['gatc']);
+    return saveWorkflowUpdate(appId, 'INSPECTION_IN_PROGRESS', 'TEST_CENTER_WORK_STARTED', 'Test center began verification work.');
+  },
+
+  recordTestCenterResult(appId: string, result: 'PASS' | 'FAIL', remarks: string) {
+    if (!remarks.trim()) throw new Error('Add testing remarks before sending the result.');
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['gatc']);
+    const status: ApplicationStatus = result === 'PASS' ? 'VERIFIED' : 'REJECTED';
+    return saveWorkflowUpdate(appId, status, 'TEST_CENTER_RESULT_SUBMITTED', remarks, {
+      testCenterNotes: remarks,
+      rejectionReason: result === 'FAIL' ? remarks : application.rejectionReason,
+    });
+  },
+
+  completeApplication(appId: string, remarks?: string) {
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['officer', 'admin']);
+    if (!['VERIFIED', 'CERTIFICATE_GENERATED'].includes(application.status)) {
+      throw new Error('Only a verified application can be marked completed.');
+    }
+    return saveWorkflowUpdate(appId, 'COMPLETED', 'APPLICATION_COMPLETED', remarks || 'Verification workflow completed.');
   },
 
   getCertificates,
@@ -546,6 +887,7 @@ export const StorageService = {
   submitInspectionAndGenerateCertificate(appId: string, inspectionData: Omit<InspectionRecord, 'id' | 'submittedAt'>): { inspection: InspectionRecord; certificate?: DigitalCertificate } {
     const application = getAllScopedRecords<VerificationApplication>('applications').find((item) => item.id === appId);
     if (!application) throw new Error('Application not found.');
+    assertWorkflowAccess(application, ['officer', 'admin']);
 
     const inspection: InspectionRecord = {
       ...inspectionData,
@@ -595,7 +937,7 @@ export const StorageService = {
       instruments[instrumentIndex] = { ...instrument, status: 'VERIFIED', currentCertNo: certificate.certNo, certExpiryDate: certificate.validUntilDate };
       setRecordsForUser('instruments', application.ownerId, instruments);
     }
-    this.updateApplicationStatus(appId, 'CERTIFICATE_GENERATED');
+    saveWorkflowUpdate(appId, 'VERIFIED', 'INSPECTION_VERIFIED', inspectionData.observations);
     notifyListeners();
     return { inspection, certificate };
   },

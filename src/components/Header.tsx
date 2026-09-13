@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Search,
   Bell,
-  ChevronDown,
   QrCode,
   LogOut,
   Copy,
@@ -14,7 +13,6 @@ import { Navbar } from './Navbar';
 
 interface HeaderProps {
   currentUser: User;
-  onRoleChange: (role: UserRole) => void;
   onOpenSearch: () => void;
   onOpenVerify: () => void;
   onOpenExpiryAlerts: () => void;
@@ -26,7 +24,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
-  onRoleChange,
   onOpenSearch,
   onOpenVerify,
   onOpenExpiryAlerts,
@@ -35,7 +32,6 @@ export const Header: React.FC<HeaderProps> = ({
   merchantId,
   onViewBusinessProfile,
 }) => {
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [merchantCopied, setMerchantCopied] = useState(false);
 
@@ -154,47 +150,9 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Role Switcher Pill */}
-          <div className="relative">
-            <button
-              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                roleLabels[currentUser.role].color
-              }`}
-            >
-              <div className="w-2 h-2 rounded-full bg-current"></div>
-              <span className="font-semibold">{roleLabels[currentUser.role].badge}</span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-
-            {showRoleDropdown && (
-              <div
-              className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2"
-                onMouseLeave={() => setShowRoleDropdown(false)}
-              >
-                <div className="px-3 py-1.5 text-[11px] font-bold tracking-wider text-slate-500 uppercase border-b border-slate-100">
-                  Switch Active Portal Role
-                </div>
-                {(['trader', 'officer', 'gatc', 'admin'] as UserRole[]).map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => {
-                      onRoleChange(role);
-                      setShowRoleDropdown(false);
-                    }}
-                    className={`w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer ${
-                      currentUser.role === role ? 'bg-[#EAF3FB] text-[#1558A6] font-semibold' : 'text-slate-700'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-medium">{roleLabels[role].label}</div>
-                      <div className="text-[10px] text-slate-500">Authorized workspace</div>
-                    </div>
-                    {currentUser.role === role && <span className="w-2 h-2 rounded-full bg-amber-400"></span>}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium ${roleLabels[currentUser.role].color}`}>
+            <div className="w-2 h-2 rounded-full bg-current"></div>
+            <span className="font-semibold">{roleLabels[currentUser.role].badge}</span>
           </div>
 
           {/* User Profile Menu & Logout */}

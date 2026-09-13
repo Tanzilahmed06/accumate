@@ -1,350 +1,112 @@
-import React, { useState } from 'react';
-import {
-  Search,
-  Download,
-} from 'lucide-react';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from 'recharts';
-import type { AnalyticsStats, AuditLog } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Eye, Plus, Search, ShieldCheck, Users } from 'lucide-react';
+import type { AnalyticsStats, AuditLog, BusinessProfile, DigitalCertificate, PlatformUser, VerificationApplication } from '../types';
+import { StorageService } from '../services/storageService';
+import { AppStatusBadge } from './TraderDashboard';
 
 interface AdminAnalyticsDashboardProps {
+  activeTab: string;
   stats: AnalyticsStats;
   auditLogs: AuditLog[];
-  onViewCertificate?: (certNo: string) => void;
+  users: PlatformUser[];
+  applications: VerificationApplication[];
+  certificates: DigitalCertificate[];
+  businessProfiles: BusinessProfile[];
+  onViewCertificate: (reference: string) => void;
+  onRefresh: () => void;
 }
 
-const MONTHLY_TREND_DATA = [
-  { month: 'Apr', applications: 120, approved: 112, revenue: 240000 },
-  { month: 'May', applications: 145, approved: 138, revenue: 290000 },
-  { month: 'Jun', applications: 160, approved: 152, revenue: 320000 },
-  { month: 'Jul', applications: 185, approved: 175, revenue: 370000 },
-  { month: 'Aug', applications: 210, approved: 198, revenue: 420000 },
-  { month: 'Sep', applications: 240, approved: 228, revenue: 490000 },
-];
+type NewUserDraft = Pick<PlatformUser, 'role' | 'name' | 'email'> & Partial<PlatformUser>;
 
-const CATEGORY_DISTRIBUTION = [
-  { name: 'Weighing Scale', count: 420, fill: '#3b82f6' },
-  { name: 'Weighbridge', count: 180, fill: '#6366f1' },
-  { name: 'Fuel Dispenser', count: 290, fill: '#f59e0b' },
-  { name: 'Electricity Meter', count: 350, fill: '#10b981' },
-  { name: 'Water Meter', count: 210, fill: '#06b6d4' },
-];
-
-const REGIONAL_COMPLIANCE = [
-  { state: 'Delhi NCT', compliance: 94.2, instruments: 520 },
-  { state: 'Haryana', compliance: 91.8, instruments: 410 },
-  { state: 'Uttar Pradesh', compliance: 88.5, instruments: 680 },
-  { state: 'Maharashtra', compliance: 95.1, instruments: 790 },
-  { state: 'Gujarat', compliance: 93.4, instruments: 620 },
-];
-
-const OFFICERS_MONITOR = [
-  { id: 'USR-OFFICER-102', name: 'Demo Officer 01', circle: 'Sample Work Area A', assigned: 14, completed: 12, passRate: '96%' },
-  { id: 'USR-OFFICER-105', name: 'Demo Officer 02', circle: 'Sample Work Area B', assigned: 18, completed: 17, passRate: '94%' },
-  { id: 'USR-OFFICER-109', name: 'Demo Officer 03', circle: 'Sample Work Area C', assigned: 11, completed: 10, passRate: '91%' },
-  { id: 'USR-GATC-204', name: 'Sample Test Centre', circle: 'Prototype Test Area', assigned: 25, completed: 24, passRate: '98%' },
-];
+const emptyNewUser: NewUserDraft = { role: 'officer', name: '', email: '', status: 'ACTIVE' };
 
 export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = ({
+  activeTab,
   stats,
   auditLogs,
+  users,
+  applications,
+  certificates,
+  businessProfiles,
+  onViewCertificate,
+  onRefresh,
 }) => {
-  const [logSearch, setLogSearch] = useState('');
-  const [logRoleFilter, setLogRoleFilter] = useState('ALL');
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | PlatformUser['role']>('ALL');
+  const [selectedUser, setSelectedUser] = useState<PlatformUser | null>(null);
+  const [userDraft, setUserDraft] = useState<PlatformUser | null>(null);
+  const [newUser, setNewUser] = useState<NewUserDraft>(emptyNewUser);
+  const [selectedApplication, setSelectedApplication] = useState<VerificationApplication | null>(null);
+  const [assignedOfficerId, setAssignedOfficerId] = useState('');
+  const [assignedTestCenterId, setAssignedTestCenterId] = useState('');
+  const [error, setError] = useState('');
 
-  const filteredLogs = auditLogs.filter((log) => {
-    const matchesSearch =
-      log.action.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.userName.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.details.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.targetId.toLowerCase().includes(logSearch.toLowerCase());
-    const matchesRole = logRoleFilter === 'ALL' || log.userRole === logRoleFilter;
-    return matchesSearch && matchesRole;
-  });
+  useEffect(() => {
+    if (selectedUser) {
+      const refreshed = users.find((user) => user.id === selectedUser.id) || null;
+      setSelectedUser(refreshed);
+      setUserDraft(refreshed);
+    }
+  }, [users, selectedUser?.id]);
 
-  const pieData = [
-    { name: 'Approved (PASS)', value: stats.completedVerifications || 12, fill: '#10b981' },
-    { name: 'Pending Review', value: stats.pendingApplications || 4, fill: '#f59e0b' },
-    { name: 'Rejected (FAIL)', value: stats.rejectedApplications || 2, fill: '#f43f5e' },
-  ];
+  const filteredUsers = useMemo(() => users.filter((user) => {
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || [user.name, user.email, user.organization || '', user.centerName || '', user.employeeId || ''].some((value) => value.toLowerCase().includes(query));
+    return matchesSearch && (roleFilter === 'ALL' || user.role === roleFilter);
+  }), [users, search, roleFilter]);
 
-  return (
-    <div className="space-y-6">
-      {/* Admin Central Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              ADMINISTRATION WORKSPACE · DEMO DATA
-            </div>
-            <h2 className="text-2xl font-bold font-heading">AccuMate administration</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Prototype application, inspection and certificate record monitoring
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stats));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", jsonStr);
-                downloadAnchor.setAttribute("download", "accumate_demo_report.json");
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
-              }}
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700 shadow-sm flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-amber-400" />
-              <span>Export demo activity report</span>
-            </button>
-          </div>
-        </div>
-      </div>
+  const officers = users.filter((user) => user.role === 'officer' && user.status === 'ACTIVE');
+  const testCenters = users.filter((user) => user.role === 'gatc' && user.status === 'ACTIVE');
 
-      {/* KPI Overview Strip (8 Stats items) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        <AdminMiniKpi label="Total Registered" value={stats.totalInstruments} color="text-slate-900 bg-white" />
-        <AdminMiniKpi label="Total Apps" value={stats.totalApplications} color="text-blue-600 bg-white" />
-        <AdminMiniKpi label="Pending Review" value={stats.pendingApplications} color="text-amber-600 bg-white" />
-        <AdminMiniKpi label="Approved" value={stats.completedVerifications} color="text-emerald-600 bg-white" />
-        <AdminMiniKpi label="Rejected" value={stats.rejectedApplications} color="text-rose-600 bg-white" />
-        <AdminMiniKpi label="Expiring Soon" value={stats.expiringCertificates} color="text-orange-600 bg-white" />
-        <AdminMiniKpi label="Expired Certs" value={stats.expiredCertificates} color="text-red-700 bg-white" />
-        <AdminMiniKpi label="Revenue (₹)" value={`₹${stats.totalRevenue}`} color="text-indigo-600 bg-white" fontMono />
-      </div>
+  const runAction = (action: () => void) => {
+    try {
+      action();
+      onRefresh();
+      setError('');
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Unable to save this administration change.');
+    }
+  };
 
-      {/* Recharts Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Monthly Application Volume & Revenue Chart */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-slate-900 text-sm font-heading">Application Volume & Revenue Growth</h3>
-              <p className="text-xs text-slate-500">Sample application and prototype transaction trend.</p>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-              +22.4% YoY Growth
-            </span>
-          </div>
+  const selectApplication = (application: VerificationApplication) => {
+    setSelectedApplication(application);
+    setAssignedOfficerId(application.assignedOfficerId || '');
+    setAssignedTestCenterId(application.assignedGATCId || '');
+    setError('');
+  };
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MONTHLY_TREND_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorApp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} style={{ fontSize: '11px', fill: '#64748b' }} />
-                <YAxis tickLine={false} axisLine={false} style={{ fontSize: '11px', fill: '#64748b' }} />
-                <Tooltip />
-                <Area type="monotone" dataKey="applications" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorApp)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+  const renderApplications = () => <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="border-b border-slate-200 bg-slate-50 px-5 py-4"><h3 className="font-bold text-slate-900">Live application registry</h3><p className="mt-1 text-xs text-slate-500">All rows are read from the shared application records.</p></header><div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-xs text-slate-600"><thead className="border-b border-slate-200 bg-slate-100/70 text-[11px] font-semibold uppercase tracking-wider text-slate-700"><tr><th className="px-4 py-3">Application</th><th className="px-4 py-3">Business</th><th className="px-4 py-3">Instrument</th><th className="px-4 py-3">Officer / test center</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Manage</th></tr></thead><tbody className="divide-y divide-slate-200">{applications.map((application) => <tr key={application.id} className="hover:bg-slate-50"><td className="px-4 py-3 font-mono font-bold text-blue-700">{application.applicationNo}</td><td className="px-4 py-3"><div className="font-semibold text-slate-900">{application.ownerName}</div><div className="text-[10px] text-slate-500">{application.merchantId || 'Merchant ID pending'}</div></td><td className="px-4 py-3">{application.instrumentTitle}</td><td className="px-4 py-3"><div>{application.assignedOfficerName || 'Officer unassigned'}</div><div className="text-[10px] text-purple-700">{application.assignedGATCName || 'Test center unassigned'}</div></td><td className="px-4 py-3"><AppStatusBadge status={application.status} /></td><td className="px-4 py-3 text-right"><button type="button" onClick={() => selectApplication(application)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 font-medium text-slate-700 hover:bg-slate-50"><Eye className="size-3.5" />Manage</button></td></tr>)}{!applications.length && <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No non-demo applications have been submitted.</td></tr>}</tbody></table></div></section>;
 
-        {/* Verification PASS vs FAIL Pie Chart */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-sm font-heading">Pass / Fail Ratio</h3>
-            <p className="text-xs text-slate-500 font-heading">Field inspection decision outcome distribution.</p>
-          </div>
+  return <div className="space-y-6">
+    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-white shadow-xl"><p className="text-xs font-semibold uppercase tracking-wider text-amber-300">Department Administration</p><h2 className="mt-1 text-2xl font-bold">AccuMate workflow oversight</h2><p className="mt-2 text-sm text-slate-300">Metrics, user profiles, assignments, certificates, and history are derived from the local application data layer.</p></section>
+    {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
 
-          <div className="h-48 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value">
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+    {activeTab === 'user-management' ? <UserManagement users={filteredUsers} search={search} roleFilter={roleFilter} selectedUser={selectedUser} userDraft={userDraft} newUser={newUser} businessProfiles={businessProfiles} onSearch={setSearch} onRoleFilter={setRoleFilter} onSelectUser={(user) => { setSelectedUser(user); setUserDraft(user); }} onDraftChange={setUserDraft} onNewUserChange={setNewUser} onSave={() => { if (userDraft) runAction(() => StorageService.updateUserProfile(userDraft.id, userDraft)); }} onCreate={() => runAction(() => { StorageService.createUserProfile(newUser); setNewUser(emptyNewUser); })} /> : activeTab === 'officer-monitor' ? <WorkloadMonitor users={users} applications={applications} /> : activeTab === 'all-certificates' ? <CertificateRegistry certificates={certificates} onViewCertificate={onViewCertificate} /> : activeTab === 'audit-logs' ? <AuditHistory auditLogs={auditLogs} /> : <>
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"><Metric label="Traders" value={stats.totalTraders} /><Metric label="Field officers" value={stats.totalOfficers} /><Metric label="Test centers" value={stats.totalTestCenters} /><Metric label="Total applications" value={stats.totalApplications} /><Metric label="Pending applications" value={stats.pendingApplications} /><Metric label="Under review" value={stats.underReviewApplications} /><Metric label="Verified / completed" value={stats.completedVerifications} /><Metric label="Active certificates" value={stats.activeCertificates} /><Metric label="Expiring certificates" value={stats.expiringCertificates} /><Metric label="Rejected" value={stats.rejectedApplications} /></section>
+      {renderApplications()}
+    </>}
 
-          <div className="space-y-1.5 text-xs border-t border-slate-100 pt-3">
-            {pieData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-slate-700 font-medium">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.fill }}></span>
-                  <span>{item.name}</span>
-                </div>
-                <span className="font-bold">{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Category Breakdown & State Compliance */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Category Breakdown Bar Chart */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-900 text-sm font-heading">Instrument Category Distribution</h3>
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={CATEGORY_DISTRIBUTION} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} style={{ fontSize: '10px', fill: '#64748b' }} />
-                <YAxis tickLine={false} axisLine={false} style={{ fontSize: '10px', fill: '#64748b' }} />
-                <Tooltip />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {CATEGORY_DISTRIBUTION.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* State Compliance Rates */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-900 text-sm font-heading">Regional Compliance Matrix</h3>
-          <div className="space-y-3">
-            {REGIONAL_COMPLIANCE.map((st) => (
-              <div key={st.state} className="space-y-1">
-                <div className="flex justify-between text-xs font-semibold text-slate-800">
-                  <span>{st.state}</span>
-                  <span className="text-emerald-600">{st.compliance}% Compliance</span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${st.compliance}%` }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Officers & GATC Workload Monitor */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-4 bg-slate-50/50">
-          <h3 className="font-bold text-slate-900 text-sm font-heading">Officers & GATC Performance Monitor</h3>
-          <p className="text-xs text-slate-500">Track inspector load, throughput, and accuracy ratios.</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200 uppercase text-[11px] tracking-wider">
-              <tr>
-                <th className="px-6 py-3.5">Officer / Facility Name</th>
-                <th className="px-6 py-3.5">Circle Jurisdiction</th>
-                <th className="px-6 py-3.5">Assigned Apps</th>
-                <th className="px-6 py-3.5">Completed</th>
-                <th className="px-6 py-3.5 text-right">Pass Rate</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {OFFICERS_MONITOR.map((off) => (
-                <tr key={off.id} className="hover:bg-slate-50/80">
-                  <td className="px-6 py-3.5 font-bold text-slate-900">{off.name}</td>
-                  <td className="px-6 py-3.5 text-slate-600">{off.circle}</td>
-                  <td className="px-6 py-3.5 font-semibold text-slate-800">{off.assigned}</td>
-                  <td className="px-6 py-3.5 font-semibold text-emerald-700">{off.completed}</td>
-                  <td className="px-6 py-3.5 text-right font-extrabold text-blue-700 font-mono">{off.passRate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Audit Trail Logs */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
-          <div>
-            <h3 className="font-bold text-slate-900 text-sm font-heading">System Security & Audit Trail</h3>
-            <p className="text-xs text-slate-500">Immutable digital record of every transaction, certificate, and login.</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search audit action, user, ID..."
-                value={logSearch}
-                onChange={(e) => setLogSearch(e.target.value)}
-                className="pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 w-48 sm:w-64"
-              />
-            </div>
-            <select
-              value={logRoleFilter}
-              onChange={(e) => setLogRoleFilter(e.target.value)}
-              className="py-1.5 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 cursor-pointer"
-            >
-              <option value="ALL">All Roles</option>
-              <option value="trader">Trader</option>
-              <option value="officer">Officer</option>
-              <option value="gatc">GATC</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200 uppercase text-[11px] tracking-wider">
-              <tr>
-                <th className="px-6 py-3.5">Timestamp</th>
-                <th className="px-6 py-3.5">User & Role</th>
-                <th className="px-6 py-3.5">Action Event</th>
-                <th className="px-6 py-3.5">Target ID</th>
-                <th className="px-6 py-3.5">Audit Log Details</th>
-                <th className="px-6 py-3.5 text-right">IP Address</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 font-mono text-[11px]">
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50/80">
-                  <td className="px-6 py-3 text-slate-500">{log.timestamp}</td>
-                  <td className="px-6 py-3 font-semibold text-slate-900 font-sans">
-                    {log.userName}
-                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 border text-slate-600 uppercase font-mono">
-                      {log.userRole}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 font-bold text-blue-700">{log.action}</td>
-                  <td className="px-6 py-3 font-bold text-amber-600">{log.targetId}</td>
-                  <td className="px-6 py-3 text-slate-700 font-sans">{log.details}</td>
-                  <td className="px-6 py-3 text-right text-slate-400">{log.ipAddress}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+    {selectedApplication && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"><header className="flex justify-between border-b border-slate-200 px-6 py-5"><div><p className="font-mono text-xs font-bold text-blue-700">{selectedApplication.applicationNo}</p><h3 className="mt-1 font-bold text-slate-900">Manage assignments</h3></div><button type="button" onClick={() => setSelectedApplication(null)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">×</button></header><div className="space-y-5 p-6"><div className="grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-700">Field officer<select value={assignedOfficerId} onChange={(event) => setAssignedOfficerId(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal outline-none focus:border-blue-500"><option value="">Select officer</option>{officers.map((officer) => <option key={officer.id} value={officer.id}>{officer.name}{officer.employeeId ? ` (${officer.employeeId})` : ''}</option>)}</select></label><label className="text-xs font-semibold text-slate-700">Test center<select value={assignedTestCenterId} onChange={(event) => setAssignedTestCenterId(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal outline-none focus:border-purple-500"><option value="">Select test center</option>{testCenters.map((center) => <option key={center.id} value={center.id}>{center.centerName || center.name}{center.centerCode ? ` (${center.centerCode})` : ''}</option>)}</select></label></div><div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4"><button type="button" disabled={!assignedOfficerId} onClick={() => runAction(() => StorageService.assignOfficer(selectedApplication.id, assignedOfficerId))} className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 disabled:opacity-50">Assign field officer</button><button type="button" disabled={!assignedTestCenterId} onClick={() => runAction(() => StorageService.assignTestCenter(selectedApplication.id, assignedTestCenterId))} className="rounded-lg border border-purple-300 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 disabled:opacity-50">Assign test center</button></div><StatusHistory application={selectedApplication} /></div></section></div>}
+  </div>;
 };
 
-const AdminMiniKpi: React.FC<{ label: string; value: number | string; color: string; fontMono?: boolean }> = ({
-  label,
-  value,
-  color,
-  fontMono,
-}) => (
-  <div className={`p-3 rounded-2xl border border-slate-200 shadow-xs text-center ${color}`}>
-    <div className="text-[10px] font-semibold text-slate-500 truncate">{label}</div>
-    <div className={`text-lg font-extrabold font-heading mt-0.5 ${fontMono ? 'font-mono' : ''}`}>{value}</div>
-  </div>
-);
+const UserManagement: React.FC<{ users: PlatformUser[]; search: string; roleFilter: 'ALL' | PlatformUser['role']; selectedUser: PlatformUser | null; userDraft: PlatformUser | null; newUser: NewUserDraft; businessProfiles: BusinessProfile[]; onSearch: (value: string) => void; onRoleFilter: (value: 'ALL' | PlatformUser['role']) => void; onSelectUser: (user: PlatformUser) => void; onDraftChange: (user: PlatformUser | null) => void; onNewUserChange: (user: NewUserDraft) => void; onSave: () => void; onCreate: () => void }> = ({ users, search, roleFilter, selectedUser, userDraft, newUser, businessProfiles, onSearch, onRoleFilter, onSelectUser, onDraftChange, onNewUserChange, onSave, onCreate }) => {
+  const businessProfile = selectedUser ? businessProfiles.find((profile) => profile.userId === selectedUser.id) : undefined;
+  return <div className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]"><section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="border-b border-slate-200 bg-slate-50 p-5"><h3 className="font-bold text-slate-900">User management</h3><p className="mt-1 text-xs text-slate-500">Profile fields never include passwords.</p><div className="mt-3 flex gap-2"><label className="relative flex-1"><Search className="absolute left-3 top-2.5 size-3.5 text-slate-400" /><input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Search people or centers" className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-xs" /></label><select value={roleFilter} onChange={(event) => onRoleFilter(event.target.value as 'ALL' | PlatformUser['role'])} className="rounded-lg border border-slate-300 px-3 text-xs"><option value="ALL">All roles</option><option value="trader">Trader</option><option value="officer">Field officer</option><option value="gatc">Test center</option><option value="admin">Admin</option></select></div></header><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-slate-100/70 text-[11px] uppercase text-slate-600"><tr><th className="px-4 py-3">Profile</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Status</th><th className="px-4 py-3"></th></tr></thead><tbody className="divide-y divide-slate-200">{users.map((user) => <tr key={user.id}><td className="px-4 py-3"><div className="font-semibold text-slate-900">{user.centerName || user.name}</div><div className="text-[10px] text-slate-500">{user.email}</div></td><td className="px-4 py-3 uppercase">{user.role}</td><td className="px-4 py-3"><span className={user.status === 'ACTIVE' ? 'text-emerald-700' : 'text-rose-700'}>{user.status}</span></td><td className="px-4 py-3 text-right"><button type="button" onClick={() => onSelectUser(user)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-slate-700 hover:bg-slate-50">View</button></td></tr>)}{!users.length && <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-500">No matching profiles.</td></tr>}</tbody></table></div></section><section className="space-y-6">{userDraft ? <UserEditor draft={userDraft} businessProfile={businessProfile} onChange={onDraftChange} onSave={onSave} /> : <CreateUserForm draft={newUser} onChange={onNewUserChange} onCreate={onCreate} />}</section></div>;
+};
+
+const UserEditor: React.FC<{ draft: PlatformUser; businessProfile?: BusinessProfile; onChange: (user: PlatformUser) => void; onSave: () => void }> = ({ draft, businessProfile, onChange, onSave }) => <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-bold text-slate-900">Edit platform profile</h3><p className="mt-1 text-xs text-slate-500">{draft.id}</p><ProfileFields draft={draft} onChange={onChange} /><button type="button" onClick={onSave} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"><CheckCircle2 className="size-3.5" />Save profile</button>{businessProfile && <div className="mt-5 border-t border-slate-200 pt-4"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Trader business information</h4><dl className="mt-3 grid grid-cols-2 gap-3 text-xs"><Detail label="Business">{businessProfile.businessName}</Detail><Detail label="Merchant ID">{businessProfile.merchantId}</Detail><Detail label="GSTIN">{businessProfile.gstin || 'Not supplied'}</Detail><Detail label="Address">{`${businessProfile.city}, ${businessProfile.state}`}</Detail></dl></div>}</section>;
+
+const CreateUserForm: React.FC<{ draft: NewUserDraft; onChange: (draft: NewUserDraft) => void; onCreate: () => void }> = ({ draft, onChange, onCreate }) => <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-2"><Plus className="size-4 text-blue-700" /><h3 className="font-bold text-slate-900">Create platform profile</h3></div><p className="mt-1 text-xs text-slate-500">Create a real prototype profile before assigning it to work; no demo profile is generated.</p><div className="mt-4 space-y-3"><label className="block text-xs font-semibold text-slate-700">Role<select value={draft.role} onChange={(event) => onChange({ ...draft, role: event.target.value as PlatformUser['role'] })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"><option value="officer">Field officer</option><option value="gatc">Test center</option><option value="admin">Department admin</option><option value="trader">Trader</option></select></label><label className="block text-xs font-semibold text-slate-700">Name<input value={draft.name} onChange={(event) => onChange({ ...draft, name: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label><label className="block text-xs font-semibold text-slate-700">Email<input type="email" value={draft.email} onChange={(event) => onChange({ ...draft, email: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label>{draft.role === 'gatc' && <><label className="block text-xs font-semibold text-slate-700">Center name<input value={draft.centerName || ''} onChange={(event) => onChange({ ...draft, centerName: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label><label className="block text-xs font-semibold text-slate-700">Center code<input value={draft.centerCode || ''} onChange={(event) => onChange({ ...draft, centerCode: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label></>}<button type="button" onClick={onCreate} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"><Plus className="size-3.5" />Create profile</button></div></section>;
+
+const ProfileFields: React.FC<{ draft: PlatformUser; onChange: (user: PlatformUser) => void }> = ({ draft, onChange }) => <div className="mt-4 grid gap-3 sm:grid-cols-2">{([['name', 'Name'], ['email', 'Email'], ['phone', 'Mobile'], ['designation', 'Designation'], ['employeeId', 'Employee ID'], ['department', 'Department'], ['state', 'State'], ['district', 'District'], ['office', 'Office'], ['organization', 'Organization'], ['centerName', 'Center name'], ['centerCode', 'Center code'], ['address', 'Address'], ['city', 'City']] as const).map(([field, label]) => <label key={field} className="block text-xs font-semibold text-slate-700">{label}<input value={draft[field] || ''} onChange={(event) => onChange({ ...draft, [field]: event.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label>)}<label className="block text-xs font-semibold text-slate-700">Role<select value={draft.role} onChange={(event) => onChange({ ...draft, role: event.target.value as PlatformUser['role'] })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"><option value="trader">Trader</option><option value="officer">Field officer</option><option value="gatc">Test center</option><option value="admin">Admin</option></select></label><label className="block text-xs font-semibold text-slate-700">Status<select value={draft.status} onChange={(event) => onChange({ ...draft, status: event.target.value as PlatformUser['status'] })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label></div>;
+
+const WorkloadMonitor: React.FC<{ users: PlatformUser[]; applications: VerificationApplication[] }> = ({ users, applications }) => <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="border-b border-slate-200 bg-slate-50 p-5"><h3 className="font-bold text-slate-900">Field officer and test-center workload</h3><p className="mt-1 text-xs text-slate-500">Assignment counts are calculated from the current application records.</p></header><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-slate-100/70 text-[11px] uppercase text-slate-600"><tr><th className="px-4 py-3">Profile</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Completed / verified</th></tr></thead><tbody className="divide-y divide-slate-200">{users.filter((user) => user.role === 'officer' || user.role === 'gatc').map((user) => { const assigned = applications.filter((application) => application.assignedOfficerId === user.id || application.assignedGATCId === user.id); const completed = assigned.filter((application) => ['VERIFIED', 'COMPLETED'].includes(application.status)); return <tr key={user.id}><td className="px-4 py-3 font-semibold text-slate-900">{user.centerName || user.name}</td><td className="px-4 py-3 uppercase">{user.role}</td><td className="px-4 py-3">{assigned.length}</td><td className="px-4 py-3 text-emerald-700">{completed.length}</td></tr>; })}</tbody></table></div></section>;
+
+const CertificateRegistry: React.FC<{ certificates: DigitalCertificate[]; onViewCertificate: (reference: string) => void }> = ({ certificates, onViewCertificate }) => <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="border-b border-slate-200 bg-slate-50 p-5"><h3 className="font-bold text-slate-900">Certificate registry</h3></header><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-slate-100/70 text-[11px] uppercase text-slate-600"><tr><th className="px-4 py-3">Certificate</th><th className="px-4 py-3">Business</th><th className="px-4 py-3">Valid until</th><th className="px-4 py-3">Status</th><th className="px-4 py-3"></th></tr></thead><tbody className="divide-y divide-slate-200">{certificates.map((certificate) => <tr key={certificate.certNo}><td className="px-4 py-3 font-mono font-bold text-emerald-700">{certificate.certNo}</td><td className="px-4 py-3">{certificate.businessName || certificate.ownerName}</td><td className="px-4 py-3">{certificate.validUntilDate}</td><td className="px-4 py-3">{certificate.status}</td><td className="px-4 py-3 text-right"><button type="button" onClick={() => onViewCertificate(certificate.certNo)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-slate-700 hover:bg-slate-50">View</button></td></tr>)}{!certificates.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">No certificates have been issued.</td></tr>}</tbody></table></div></section>;
+
+const AuditHistory: React.FC<{ auditLogs: AuditLog[] }> = ({ auditLogs }) => <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><header className="border-b border-slate-200 bg-slate-50 p-5"><h3 className="font-bold text-slate-900">Audit history</h3><p className="mt-1 text-xs text-slate-500">Status updates and profile changes are recorded when the action occurs.</p></header><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-slate-100/70 text-[11px] uppercase text-slate-600"><tr><th className="px-4 py-3">Timestamp</th><th className="px-4 py-3">Actor</th><th className="px-4 py-3">Action</th><th className="px-4 py-3">Details</th></tr></thead><tbody className="divide-y divide-slate-200">{auditLogs.map((log) => <tr key={log.id}><td className="px-4 py-3">{new Date(log.timestamp).toLocaleString()}</td><td className="px-4 py-3">{log.userName} <span className="text-slate-500">({log.userRole})</span></td><td className="px-4 py-3 font-semibold text-blue-700">{log.action}</td><td className="px-4 py-3">{log.details}</td></tr>)}{!auditLogs.length && <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-500">No audit events have been recorded.</td></tr>}</tbody></table></div></section>;
+
+const Metric: React.FC<{ label: string; value: number }> = ({ label, value }) => <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-slate-900">{value}</p></div>;
+const Detail: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => <div><dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</dt><dd className="mt-1 font-medium text-slate-800">{children}</dd></div>;
+const StatusHistory: React.FC<{ application: VerificationApplication }> = ({ application }) => <div><h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Status history</h4><ol className="mt-3 space-y-2">{(application.statusHistory || []).map((item) => <li key={item.id} className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600"><strong className="text-slate-900">{item.newStatus.replaceAll('_', ' ')}</strong> · {item.changedByName} · {new Date(item.timestamp).toLocaleString()} {item.remarks && <span>— {item.remarks}</span>}</li>)}</ol></div>;

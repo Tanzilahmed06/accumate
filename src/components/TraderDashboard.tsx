@@ -40,9 +40,9 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
   // Stats calculation
   const totalInstruments = instruments.length;
   const activeCertificatesCount = certificates.filter((c) => c.status === 'VALID').length;
-  const pendingAppsCount = applications.filter((a) => a.status !== 'CERTIFICATE_GENERATED' && a.status !== 'REJECTED').length;
+  const pendingAppsCount = applications.filter((a) => !['VERIFIED', 'COMPLETED', 'CERTIFICATE_GENERATED', 'REJECTED'].includes(a.status)).length;
   const expiringSoonCount = expiryAlerts.length;
-  const completedCount = applications.filter((a) => a.status === 'CERTIFICATE_GENERATED').length;
+  const completedCount = applications.filter((a) => ['VERIFIED', 'COMPLETED', 'CERTIFICATE_GENERATED'].includes(a.status)).length;
 
   const filteredInstruments = instruments.filter((inst) => {
     const matchesSearch =
@@ -387,10 +387,15 @@ export const AppStatusBadge: React.FC<{ status: VerificationApplication['status'
   const map: Record<VerificationApplication['status'], { label: string; style: string }> = {
     DRAFT: { label: 'DRAFT', style: 'border-slate-300 bg-slate-50 text-slate-700' },
     SUBMITTED: { label: 'SUBMITTED', style: 'border-slate-300 bg-slate-50 text-slate-800' },
+    UNDER_REVIEW: { label: 'UNDER REVIEW', style: 'border-blue-300 bg-blue-50 text-blue-800' },
+    ASSIGNED: { label: 'ASSIGNED', style: 'border-violet-300 bg-violet-50 text-violet-800' },
     DOCUMENTS_VERIFIED: { label: 'DOCUMENTS VERIFIED', style: 'border-blue-300 bg-blue-50 text-blue-800' },
     OFFICER_ASSIGNED: { label: 'OFFICER ASSIGNED', style: 'border-blue-300 bg-blue-50 text-blue-800' },
     INSPECTION_SCHEDULED: { label: 'INSPECTION SCHEDULED', style: 'border-amber-300 bg-amber-50 text-amber-800' },
+    INSPECTION_IN_PROGRESS: { label: 'INSPECTION IN PROGRESS', style: 'border-amber-300 bg-amber-50 text-amber-800' },
     INSPECTION_COMPLETED: { label: 'INSPECTION COMPLETED', style: 'border-blue-300 bg-blue-50 text-blue-800' },
+    VERIFIED: { label: 'VERIFIED', style: 'border-emerald-300 bg-emerald-50 text-emerald-800' },
+    COMPLETED: { label: 'COMPLETED', style: 'border-emerald-300 bg-emerald-50 text-emerald-800' },
     CERTIFICATE_GENERATED: { label: 'CERTIFICATE ISSUED', style: 'border-emerald-300 bg-emerald-50 text-emerald-800' },
     REJECTED: { label: 'REJECTED', style: 'border-rose-300 bg-rose-50 text-rose-800' },
   };

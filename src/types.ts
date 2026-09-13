@@ -24,6 +24,24 @@ export interface User {
   avatar?: string;
 }
 
+export type ManagedUserRole = Exclude<UserRole, 'public'>;
+
+export interface PlatformUser extends User {
+  role: ManagedUserRole;
+  status: 'ACTIVE' | 'INACTIVE';
+  employeeId?: string;
+  department?: string;
+  state?: string;
+  district?: string;
+  office?: string;
+  centerName?: string;
+  centerCode?: string;
+  address?: string;
+  city?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type BusinessType =
   | 'Proprietorship'
   | 'Partnership'
@@ -112,12 +130,28 @@ export interface Instrument {
 export type ApplicationStatus =
   | 'DRAFT'
   | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'ASSIGNED'
   | 'DOCUMENTS_VERIFIED'
   | 'OFFICER_ASSIGNED'
   | 'INSPECTION_SCHEDULED'
+  | 'INSPECTION_IN_PROGRESS'
   | 'INSPECTION_COMPLETED'
+  | 'VERIFIED'
+  | 'COMPLETED'
   | 'CERTIFICATE_GENERATED'
   | 'REJECTED';
+
+export interface ApplicationStatusHistory {
+  id: string;
+  previousStatus?: ApplicationStatus;
+  newStatus: ApplicationStatus;
+  changedById: string;
+  changedByName: string;
+  changedByRole: UserRole;
+  remarks?: string;
+  timestamp: string;
+}
 
 export interface TimelineStep {
   title: string;
@@ -146,11 +180,17 @@ export interface VerificationApplication {
   assignedOfficerName?: string;
   assignedGATCId?: string;
   assignedGATCName?: string;
+  assignedTestCenterAt?: string;
   feeAmount: number;
   paymentStatus: 'PAID' | 'PENDING';
   paymentTransactionId?: string;
   status: ApplicationStatus;
+  verificationStatus?: 'PENDING' | 'IN_PROGRESS' | 'VERIFIED' | 'REJECTED' | 'COMPLETED';
+  reviewNotes?: string;
+  testCenterNotes?: string;
   rejectionReason?: string;
+  updatedAt?: string;
+  statusHistory?: ApplicationStatusHistory[];
   documents: {
     purchaseInvoice?: string;
     instrumentPhoto?: string;
@@ -243,11 +283,16 @@ export interface ExpiryAlert {
 }
 
 export interface AnalyticsStats {
+  totalTraders: number;
+  totalOfficers: number;
+  totalTestCenters: number;
   totalInstruments: number;
   totalApplications: number;
   pendingApplications: number;
+  underReviewApplications: number;
   completedVerifications: number;
   rejectedApplications: number;
+  activeCertificates: number;
   expiringCertificates: number;
   expiredCertificates: number;
   totalRevenue: number;

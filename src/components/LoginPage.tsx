@@ -19,7 +19,7 @@ import { BrandLogo } from './BrandLogo';
 import { Navbar } from './Navbar';
 
 interface LoginPageProps {
-  onLoginSuccess: (role: UserRole, identity: { email: string; mobile: string }) => void;
+  onLoginSuccess: (role: UserRole, identity: { email: string; mobile: string }) => void | Promise<void>;
   onLoadDemoWorkspace: () => void;
   onOpenPublicVerify: () => void;
 }
@@ -88,8 +88,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onLoadDemo
 
     setIsLoading(true);
     window.setTimeout(() => {
-      onLoginSuccess(selectedRole, { email, mobile: mobileNumber });
-      setIsLoading(false);
+      void Promise.resolve(onLoginSuccess(selectedRole, { email, mobile: mobileNumber }))
+        .catch((loginError: unknown) => {
+          setError(loginError instanceof Error ? loginError.message : 'Unable to sign in. Please check your details.');
+        })
+        .finally(() => setIsLoading(false));
     }, 650);
   };
 

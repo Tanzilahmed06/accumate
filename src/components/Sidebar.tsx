@@ -59,6 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ]
           : [
               { id: 'admin-analytics', label: 'Analytics', icon: BarChart3 },
+              { id: 'user-management', label: 'Users', icon: Users },
               { id: 'officer-monitor', label: 'Officer Monitor', icon: Users },
               { id: 'all-certificates', label: 'Certificates', icon: Award },
               { id: 'audit-logs', label: 'Audit Logs', icon: History },
@@ -253,6 +254,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   label="Central Analytics"
                   active={activeTab === 'admin-analytics'}
                   onClick={() => onTabChange('admin-analytics')}
+                />
+                <NavItem
+                  id="user-management"
+                  icon={Users}
+                  label="User Management"
+                  active={activeTab === 'user-management'}
+                  onClick={() => onTabChange('user-management')}
                 />
                 <NavItem
                   id="officer-monitor"

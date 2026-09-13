@@ -86,7 +86,7 @@ export const TimelineModal: React.FC<TimelineModalProps> = ({
             </div>
           </div>
 
-          {application.status === 'CERTIFICATE_GENERATED' && (
+          {['VERIFIED', 'COMPLETED', 'CERTIFICATE_GENERATED'].includes(application.status) && (
             <div className="pt-2">
               <button
                 onClick={() => {
