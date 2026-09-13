@@ -7,13 +7,14 @@ import {
   Eye,
   Calendar,
 } from 'lucide-react';
-import type { Instrument, VerificationApplication, DigitalCertificate, ExpiryAlert } from '../types';
+import type { BusinessProfile, Instrument, VerificationApplication, DigitalCertificate, ExpiryAlert } from '../types';
 
 interface TraderDashboardProps {
   instruments: Instrument[];
   applications: VerificationApplication[];
   certificates: DigitalCertificate[];
   expiryAlerts: ExpiryAlert[];
+  businessProfile?: BusinessProfile;
   onOpenRegisterModal: () => void;
   onOpenApplyWizard: (instrumentId?: string) => void;
   onViewCertificate: (certNo: string) => void;
@@ -25,6 +26,7 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
   applications,
   certificates,
   expiryAlerts,
+  businessProfile,
   onOpenRegisterModal,
   onOpenApplyWizard,
   onViewCertificate,
@@ -61,13 +63,15 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
           <div>
             <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700">
               <span className="h-1.5 w-1.5 bg-blue-700"></span>
-              TRADER WORKSPACE · DEMO DATA
+              TRADER WORKSPACE
             </div>
             <h2 className="font-heading text-[26px] font-semibold tracking-tight text-slate-900">
-              Sample Trader
+              {businessProfile?.businessName || 'Welcome to your AccuMate workspace'}
             </h2>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">
-              Manage prototype instrument records, proposed verification applications and clearly labelled demo certificate records.
+              {businessProfile
+                ? `Your business profile is ready${businessProfile.merchantId ? ` · ${businessProfile.merchantId}` : ''}. Add your first weighing or measuring instrument to begin.`
+                : 'Your workspace is empty. Complete your business profile when you are ready, then add your first instrument.'}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -120,6 +124,14 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
       <div className="flex items-center justify-end text-xs text-slate-500">
         <span className="font-medium text-slate-700">{completedCount}</span><span className="ml-1">completed verifications</span>
       </div>
+
+      {instruments.length === 0 && applications.length === 0 && certificates.length === 0 && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <EmptyStateCard title="No instruments yet" text="Register your first instrument to start managing verification records." action="Register Instrument" onClick={onOpenRegisterModal} />
+          <EmptyStateCard title="No applications yet" text="You haven't submitted any verification applications." action="Apply for Verification" onClick={() => onOpenApplyWizard()} />
+          <EmptyStateCard title="No certificates yet" text="Your verified certificates will appear here." />
+        </div>
+      )}
 
       {/* Main Section Navigation Tabs */}
       <div className="overflow-hidden border border-slate-200 bg-white shadow-sm">
@@ -195,7 +207,7 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
                 {filteredInstruments.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-10 text-center text-slate-400">
-                      No instruments found matching your filter criteria.
+                      {instruments.length === 0 ? <span>No instruments yet. <button type="button" onClick={onOpenRegisterModal} className="font-semibold text-blue-700 hover:underline">Register your first instrument</button></span> : 'No instruments found matching your filter criteria.'}
                     </td>
                   </tr>
                 ) : (
@@ -269,7 +281,9 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {applications.map((app) => (
+                {applications.length === 0 ? (
+                  <tr><td colSpan={6} className="py-10 text-center text-slate-500">You haven&apos;t submitted any verification applications. <button type="button" onClick={() => onOpenApplyWizard()} className="font-semibold text-blue-700 hover:underline">Apply for verification</button></td></tr>
+                ) : applications.map((app) => (
                   <tr key={app.id} className="transition-colors hover:bg-slate-50">
                     <td className="px-4 py-3.5">
                       <div>
@@ -339,6 +353,14 @@ const KpiCard: React.FC<KpiCardProps> = ({ label, value, subtext, tone }) => (
     <div className="mt-2 text-2xl font-semibold leading-none text-slate-900">{value}</div>
     <div className="mt-1 text-[11px] text-slate-500">{subtext}</div>
   </div>
+);
+
+const EmptyStateCard: React.FC<{ title: string; text: string; action?: string; onClick?: () => void }> = ({ title, text, action, onClick }) => (
+  <section className="border border-dashed border-slate-300 bg-white p-5 shadow-sm">
+    <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+    <p className="mt-2 text-xs leading-5 text-slate-600">{text}</p>
+    {action && onClick && <button type="button" onClick={onClick} className="mt-4 text-xs font-semibold text-blue-700 hover:text-blue-900">{action} →</button>}
+  </section>
 );
 
 export const StatusBadge: React.FC<{ status: Instrument['status'] }> = ({ status }) => {

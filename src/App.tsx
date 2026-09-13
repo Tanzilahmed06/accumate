@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type {
   UserRole,
   User,
+  BusinessProfile,
   Instrument,
   VerificationApplication,
   DigitalCertificate,
@@ -27,6 +28,8 @@ import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { TimelineModal } from './components/TimelineModal';
 import { PublicPortal } from './components/PublicPortal';
 import { SplashLoader } from './components/SplashLoader';
+import { OnboardingFlow } from './components/OnboardingFlow';
+import { BusinessProfile as BusinessProfilePage } from './components/BusinessProfile';
 
 export default function App() {
   const [isSplashComplete, setIsSplashComplete] = useState(false);
@@ -35,10 +38,11 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<UserRole>(() => StorageService.getCurrentRole());
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isPublicRoute, setIsPublicRoute] = useState(true);
-  const [isPublicVerifyRoute, setIsPublicVerifyRoute] = useState(false);
+  const [isPublicVerifyRoute, setIsPublicVerifyRoute] = useState(() => window.location.pathname === '/verify-certificate');
 
   // App data state synced with StorageService
   const [currentUser, setCurrentUser] = useState<User>(() => StorageService.getCurrentUser());
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | undefined>(() => StorageService.getBusinessProfile());
   const [instruments, setInstruments] = useState<Instrument[]>(() => StorageService.getInstruments());
   const [applications, setApplications] = useState<VerificationApplication[]>(() => StorageService.getApplications());
   const [certificates, setCertificates] = useState<DigitalCertificate[]>(() => StorageService.getCertificates());
@@ -58,11 +62,13 @@ export default function App() {
   const [viewingTimelineApp, setViewingTimelineApp] = useState<VerificationApplication | null>(null);
   const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [publicSearchCertNo, setPublicSearchCertNo] = useState<string | undefined>(undefined);
+  const [publicSearchCertNo, setPublicSearchCertNo] = useState<string | undefined>(() => new URLSearchParams(window.location.search).get('id') || undefined);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Sync data whenever StorageService triggers a change
   const refreshData = () => {
     setCurrentUser(StorageService.getCurrentUser());
+    setBusinessProfile(StorageService.getBusinessProfile());
     setInstruments(StorageService.getInstruments());
     setApplications(StorageService.getApplications());
     setCertificates(StorageService.getCertificates());
@@ -98,6 +104,7 @@ export default function App() {
   // Handle Login Success
   const handleLoginSuccess = (role: UserRole) => {
     handleRoleChange(role);
+    setShowOnboarding(role === 'trader' && !StorageService.getBusinessProfile());
     setIsAuthenticated(true);
   };
 
@@ -110,7 +117,7 @@ export default function App() {
 
   // Open Certificate Helper
   const handleViewCertificate = (certNoOrAppNo: string) => {
-    const cert = StorageService.getCertificateByNumber(certNoOrAppNo) || certificates[0];
+    const cert = StorageService.getCertificateByNumber(certNoOrAppNo);
     if (cert) {
       setViewingCertificate(cert);
       setIsCertModalOpen(true);
@@ -119,7 +126,9 @@ export default function App() {
 
   // Open Public QR Verification Page
   const handleOpenPublicVerify = (certNo?: string) => {
-    setPublicSearchCertNo(certNo || 'DEMO-CERT-2026-001');
+    const verificationPath = certNo ? `/verify-certificate?id=${encodeURIComponent(certNo)}` : '/verify-certificate';
+    window.history.pushState({}, '', verificationPath);
+    setPublicSearchCertNo(certNo);
     setIsPublicRoute(false);
     setIsPublicVerifyRoute(true);
     setIsCertModalOpen(false);
@@ -134,6 +143,7 @@ export default function App() {
       <PublicVerifyPage
         initialCertNo={publicSearchCertNo}
         onBackToApp={() => {
+          window.history.pushState({}, '', '/');
           setIsPublicVerifyRoute(false);
           setIsPublicRoute(true);
         }}
@@ -156,6 +166,23 @@ export default function App() {
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
         onOpenPublicVerify={() => handleOpenPublicVerify()}
+      />
+    );
+  }
+
+  if (currentRole === 'trader' && showOnboarding) {
+    return (
+      <OnboardingFlow
+        user={currentUser}
+        onComplete={(profile) => {
+          setBusinessProfile(profile);
+          setShowOnboarding(false);
+          setActiveTab('dashboard');
+        }}
+        onCompleteLater={() => {
+          setShowOnboarding(false);
+          setActiveTab('dashboard');
+        }}
       />
     );
   }
@@ -191,12 +218,20 @@ export default function App() {
         {/* Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-hidden">
           {/* TRADER ROLE VIEWS */}
-          {currentRole === 'trader' && (
+          {currentRole === 'trader' && activeTab === 'business-profile' && (
+            <BusinessProfilePage
+              profile={businessProfile}
+              onStartSetup={() => setShowOnboarding(true)}
+            />
+          )}
+
+          {currentRole === 'trader' && activeTab !== 'business-profile' && (
             <TraderDashboard
               instruments={instruments}
               applications={applications}
               certificates={certificates}
               expiryAlerts={expiryAlerts}
+              businessProfile={businessProfile}
               onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
               onOpenApplyWizard={(instId) => {
                 setWizardInitialInstId(instId);

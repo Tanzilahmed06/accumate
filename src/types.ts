@@ -24,6 +24,48 @@ export interface User {
   avatar?: string;
 }
 
+export type BusinessType =
+  | 'Proprietorship'
+  | 'Partnership'
+  | 'Private Limited'
+  | 'Public Limited'
+  | 'LLP'
+  | 'Other';
+
+export interface BusinessProfile {
+  id: string;
+  userId: string;
+  businessName: string;
+  legalBusinessName?: string;
+  businessType: BusinessType;
+  gstin: string;
+  pan?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  district: string;
+  state: string;
+  stateCode: string;
+  pinCode: string;
+  contactName: string;
+  designation: string;
+  mobile: string;
+  email: string;
+  merchantId: string;
+  createdAt: string;
+  updatedAt: string;
+  onboardingCompleted: boolean;
+}
+
+export interface Merchant {
+  merchantId: string;
+  userId: string;
+  businessProfileId: string;
+  stateCode: string;
+  status: 'ACTIVE';
+  createdAt: string;
+}
+
 export type InstrumentCategory =
   | 'Weighing Scale'
   | 'Weighbridge'
@@ -58,6 +100,7 @@ export interface Instrument {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  merchantId?: string;
   status: InstrumentStatus;
   currentCertNo?: string;
   certExpiryDate?: string;
@@ -95,6 +138,7 @@ export interface VerificationApplication {
   ownerId: string;
   ownerName: string;
   ownerEmail: string;
+  merchantId?: string;
   applicationType: 'VERIFICATION' | 'RE_VERIFICATION';
   submissionDate: string;
   scheduledInspectionDate?: string;
@@ -157,6 +201,8 @@ export interface DigitalCertificate {
   ownerEmail: string;
   ownerPhone: string;
   ownerAddress: string;
+  businessName?: string;
+  merchantId?: string;
   instrumentCategory: InstrumentCategory;
   manufacturer: string;
   modelNumber: string;
@@ -169,6 +215,7 @@ export interface DigitalCertificate {
   verificationAuthority: string;
   securityHash: string; // SHA-256 Mock hash
   qrCodeUrl: string;
+  verificationToken?: string;
   status: 'VALID' | 'EXPIRED' | 'REVOKED';
 }
 

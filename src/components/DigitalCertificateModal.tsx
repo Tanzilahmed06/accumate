@@ -18,6 +18,9 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
 }) => {
   if (!isOpen) return null;
 
+  const verificationReference = certificate.verificationToken || certificate.certNo;
+  const verificationUrl = `${window.location.origin}/verify-certificate?id=${encodeURIComponent(verificationReference)}`;
+
   const handlePrint = () => {
     window.print();
   };
@@ -94,6 +97,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               <div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase">Certificate Serial Number</div>
                 <div className="text-lg font-extrabold text-slate-900 font-mono tracking-wide">{certificate.certNo}</div>
+                {certificate.merchantId && <div className="mt-1 text-[10px] font-semibold text-slate-600">Merchant ID: <span className="font-mono">{certificate.merchantId}</span></div>}
               </div>
               <div className="text-right">
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-xs">
@@ -158,12 +162,12 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               <div className="flex flex-col items-center justify-center border-l border-slate-200 pl-4">
                 <div className="p-2 bg-white rounded-xl border border-slate-300 shadow-sm">
                   <QRCodeSVG
-                    value={`https://accumate.example/verify?cert=${certificate.certNo}`}
+                    value={verificationUrl}
                     size={80}
                     level="H"
                   />
                 </div>
-                <div className="text-[9px] font-mono text-slate-500 mt-1">Scan prototype QR</div>
+                <div className="text-[9px] font-mono text-slate-500 mt-1">Scan to verify this certificate</div>
               </div>
             </div>
 

@@ -13,6 +13,7 @@ import {
   QrCode,
   ShieldCheck,
   CheckSquare,
+  Building2,
 } from 'lucide-react';
 import type { UserRole } from '../types';
 
@@ -37,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activeRole === 'trader'
       ? [
           { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+          { id: 'business-profile', label: 'My Business', icon: Building2 },
           { id: 'instruments', label: 'Instruments', icon: ClipboardList },
           { id: 'applications', label: 'Applications', icon: FileCheck2 },
           { id: 'certificates', label: 'Certificates', icon: Award },
@@ -144,6 +146,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   label="Dashboard Overview"
                   active={activeTab === 'dashboard'}
                   onClick={() => onTabChange('dashboard')}
+                />
+                <NavItem
+                  id="business-profile"
+                  icon={Building2}
+                  label="My Business"
+                  active={activeTab === 'business-profile'}
+                  onClick={() => onTabChange('business-profile')}
                 />
                 <NavItem
                   id="instruments"

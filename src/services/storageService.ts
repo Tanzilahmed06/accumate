@@ -1,441 +1,496 @@
 import type {
-  Instrument,
-  VerificationApplication,
-  DigitalCertificate,
-  InspectionRecord,
-  AuditLog,
-  ExpiryAlert,
   AnalyticsStats,
+  AuditLog,
+  BusinessProfile,
+  DigitalCertificate,
+  ExpiryAlert,
+  InspectionRecord,
+  Instrument,
+  Merchant,
+  User,
   UserRole,
+  VerificationApplication,
 } from '../types';
-import {
-  INITIAL_INSTRUMENTS,
-  INITIAL_APPLICATIONS,
-  INITIAL_CERTIFICATES,
-  INITIAL_INSPECTIONS,
-  INITIAL_AUDIT_LOGS,
-  DEMO_USERS,
-} from './mockData';
+import { DEMO_USERS } from './mockData';
 
-const KEYS = {
-  INSTRUMENTS: 'accumate_instruments_v2',
-  APPLICATIONS: 'accumate_applications_v2',
-  CERTIFICATES: 'accumate_certificates_v2',
-  INSPECTIONS: 'accumate_inspections_v2',
-  AUDIT_LOGS: 'accumate_audit_logs_v2',
-  CURRENT_USER_ROLE: 'accumate_user_role_v2',
-};
+const KEY_PREFIX = 'accumate';
+const STORAGE_VERSION_KEY = `${KEY_PREFIX}_storage_version`;
+const CURRENT_USER_ROLE_KEY = `${KEY_PREFIX}_user_role_v3`;
+const MERCHANTS_KEY = `${KEY_PREFIX}_merchants_v3`;
 
 type StorageListener = () => void;
+type ScopedRecord = Instrument | VerificationApplication | DigitalCertificate | AuditLog;
+
 const listeners: StorageListener[] = [];
+
+const stateCodes: Record<string, string> = {
+  'Andhra Pradesh': 'AP',
+  'Arunachal Pradesh': 'AR',
+  Assam: 'AS',
+  Bihar: 'BR',
+  Chhattisgarh: 'CG',
+  Goa: 'GA',
+  Gujarat: 'GJ',
+  Haryana: 'HR',
+  'Himachal Pradesh': 'HP',
+  Jharkhand: 'JH',
+  Karnataka: 'KA',
+  Kerala: 'KL',
+  'Madhya Pradesh': 'MP',
+  Maharashtra: 'MH',
+  Manipur: 'MN',
+  Meghalaya: 'ML',
+  Mizoram: 'MZ',
+  Nagaland: 'NL',
+  Odisha: 'OD',
+  Punjab: 'PB',
+  Rajasthan: 'RJ',
+  Sikkim: 'SK',
+  'Tamil Nadu': 'TN',
+  Telangana: 'TS',
+  Tripura: 'TR',
+  'Uttar Pradesh': 'UP',
+  Uttarakhand: 'UK',
+  'West Bengal': 'WB',
+  'Andaman and Nicobar Islands': 'AN',
+  Chandigarh: 'CH',
+  'Dadra and Nagar Haveli and Daman and Diu': 'DD',
+  Delhi: 'DL',
+  'Jammu and Kashmir': 'JK',
+  Ladakh: 'LA',
+  Lakshadweep: 'LD',
+  Puducherry: 'PY',
+};
+
+const scopedKey = (collection: string, userId: string) => `${KEY_PREFIX}_${collection}_v3_${userId}`;
+const profileKey = (userId: string) => `${KEY_PREFIX}_business_${userId}`;
+
+function notifyListeners() {
+  listeners.forEach((listener) => listener());
+}
+
+function readValue<T>(key: string, fallback: T): T {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? (JSON.parse(value) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeValue<T>(key: string, value: T) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function displayDate(date = new Date()) {
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function getStoredProfile(userId: string): BusinessProfile | undefined {
+  return readValue<BusinessProfile | undefined>(profileKey(userId), undefined);
+}
+
+function getRecordsForUser<T>(collection: string, userId: string): T[] {
+  return readValue<T[]>(scopedKey(collection, userId), []);
+}
+
+function setRecordsForUser<T>(collection: string, userId: string, records: T[]) {
+  writeValue(scopedKey(collection, userId), records);
+}
+
+function getAllScopedRecords<T extends ScopedRecord>(collection: string): T[] {
+  const keyStart = `${KEY_PREFIX}_${collection}_v3_`;
+  const records: T[] = [];
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(keyStart)) records.push(...readValue<T[]>(key, []));
+  }
+
+  return records;
+}
+
+function getCurrentRole(): UserRole {
+  return (localStorage.getItem(CURRENT_USER_ROLE_KEY) as UserRole) || 'trader';
+}
+
+function getCurrentBaseUser(): User {
+  return DEMO_USERS[getCurrentRole()] || DEMO_USERS.trader;
+}
+
+function getCurrentUser(): User {
+  const baseUser = getCurrentBaseUser();
+  if (baseUser.role !== 'trader') return baseUser;
+
+  const profile = getStoredProfile(baseUser.id);
+  if (!profile) return baseUser;
+
+  return {
+    ...baseUser,
+    name: profile.contactName,
+    email: profile.email,
+    designation: profile.designation,
+    organization: profile.businessName,
+    phone: profile.mobile,
+  };
+}
+
+function getMerchants(): Record<string, Merchant> {
+  return readValue<Record<string, Merchant>>(MERCHANTS_KEY, {});
+}
+
+function generateMerchantId(state: string) {
+  const stateCode = stateCodes[state] || 'IN';
+  const merchants = getMerchants();
+
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    const merchantId = `ACCU-T-${stateCode}-${suffix}`;
+    if (!merchants[merchantId]) return merchantId;
+  }
+
+  throw new Error('Unable to generate a unique merchant ID. Please try again.');
+}
+
+function getInstruments(): Instrument[] {
+  const user = getCurrentUser();
+  return user.role === 'trader'
+    ? getRecordsForUser<Instrument>('instruments', user.id)
+    : getAllScopedRecords<Instrument>('instruments');
+}
+
+function getApplications(): VerificationApplication[] {
+  const user = getCurrentUser();
+  return user.role === 'trader'
+    ? getRecordsForUser<VerificationApplication>('applications', user.id)
+    : getAllScopedRecords<VerificationApplication>('applications');
+}
+
+function getCertificates(): DigitalCertificate[] {
+  const user = getCurrentUser();
+  return user.role === 'trader'
+    ? getRecordsForUser<DigitalCertificate>('certificates', user.id)
+    : getAllScopedRecords<DigitalCertificate>('certificates');
+}
+
+function getAuditLogs(): AuditLog[] {
+  const user = getCurrentUser();
+  return user.role === 'trader'
+    ? getRecordsForUser<AuditLog>('audit_logs', user.id)
+    : getAllScopedRecords<AuditLog>('audit_logs');
+}
+
+function addAuditLog(action: string, details: string, targetId: string) {
+  const user = getCurrentUser();
+  const logs = getRecordsForUser<AuditLog>('audit_logs', user.id);
+  const log: AuditLog = {
+    id: `LOG-${crypto.randomUUID()}`,
+    timestamp: new Date().toISOString(),
+    userId: user.id,
+    userName: user.name,
+    userRole: user.role,
+    action,
+    targetId,
+    details,
+    ipAddress: 'Local prototype',
+  };
+  setRecordsForUser('audit_logs', user.id, [log, ...logs].slice(0, 100));
+}
+
+function getExpiryAlerts(): ExpiryAlert[] {
+  const today = new Date();
+  const alerts: ExpiryAlert[] = [];
+
+  getInstruments().forEach((instrument) => {
+    if (!instrument.certExpiryDate) return;
+    const daysRemaining = Math.ceil((new Date(instrument.certExpiryDate).getTime() - today.getTime()) / 86_400_000);
+    const severity: ExpiryAlert['severity'] | undefined = daysRemaining < 0
+      ? 'EXPIRED'
+      : daysRemaining <= 7
+        ? 'CRITICAL'
+        : daysRemaining <= 30
+          ? 'HIGH'
+          : daysRemaining <= 60
+            ? 'MEDIUM'
+            : undefined;
+
+    if (severity) {
+      alerts.push({
+        instrumentId: instrument.id,
+        instrumentTitle: instrument.title,
+        category: instrument.category,
+        serialNumber: instrument.serialNumber,
+        certNo: instrument.currentCertNo || 'N/A',
+        expiryDate: instrument.certExpiryDate,
+        daysRemaining,
+        severity,
+      });
+    }
+  });
+
+  return alerts.sort((first, second) => first.daysRemaining - second.daysRemaining);
+}
+
+function getAnalyticsStats(): AnalyticsStats {
+  const applications = getApplications();
+  const alerts = getExpiryAlerts();
+  const pendingApplications = applications.filter((application) => !['CERTIFICATE_GENERATED', 'REJECTED'].includes(application.status)).length;
+
+  return {
+    totalInstruments: getInstruments().length,
+    totalApplications: applications.length,
+    pendingApplications,
+    completedVerifications: applications.filter((application) => application.status === 'CERTIFICATE_GENERATED').length,
+    rejectedApplications: applications.filter((application) => application.status === 'REJECTED').length,
+    expiringCertificates: alerts.filter((alert) => alert.severity !== 'EXPIRED').length,
+    expiredCertificates: alerts.filter((alert) => alert.severity === 'EXPIRED').length,
+    totalRevenue: 0,
+  };
+}
+
+function parseVerificationReference(value: string) {
+  const trimmed = value.trim();
+  try {
+    const url = new URL(trimmed);
+    return url.searchParams.get('id') || url.searchParams.get('cert') || trimmed;
+  } catch {
+    return trimmed;
+  }
+}
 
 export function subscribeStorage(listener: StorageListener) {
   listeners.push(listener);
   return () => {
-    const idx = listeners.indexOf(listener);
-    if (idx > -1) listeners.splice(idx, 1);
+    const index = listeners.indexOf(listener);
+    if (index >= 0) listeners.splice(index, 1);
   };
-}
-
-function notifyListeners() {
-  listeners.forEach((fn) => fn());
 }
 
 export const StorageService = {
   initStorage() {
-    if (!localStorage.getItem(KEYS.INSTRUMENTS)) {
-      localStorage.setItem(KEYS.INSTRUMENTS, JSON.stringify(INITIAL_INSTRUMENTS));
-    }
-    if (!localStorage.getItem(KEYS.APPLICATIONS)) {
-      localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(INITIAL_APPLICATIONS));
-    }
-    if (!localStorage.getItem(KEYS.CERTIFICATES)) {
-      localStorage.setItem(KEYS.CERTIFICATES, JSON.stringify(INITIAL_CERTIFICATES));
-    }
-    if (!localStorage.getItem(KEYS.INSPECTIONS)) {
-      localStorage.setItem(KEYS.INSPECTIONS, JSON.stringify(INITIAL_INSPECTIONS));
-    }
-    if (!localStorage.getItem(KEYS.AUDIT_LOGS)) {
-      localStorage.setItem(KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
-    }
-    if (!localStorage.getItem(KEYS.CURRENT_USER_ROLE)) {
-      localStorage.setItem(KEYS.CURRENT_USER_ROLE, 'trader');
-    }
+    if (!localStorage.getItem(STORAGE_VERSION_KEY)) localStorage.setItem(STORAGE_VERSION_KEY, '3');
+    if (!localStorage.getItem(CURRENT_USER_ROLE_KEY)) localStorage.setItem(CURRENT_USER_ROLE_KEY, 'trader');
   },
 
-  getCurrentRole(): UserRole {
-    return (localStorage.getItem(KEYS.CURRENT_USER_ROLE) as UserRole) || 'trader';
-  },
+  getCurrentRole,
 
   setCurrentRole(role: UserRole) {
-    localStorage.setItem(KEYS.CURRENT_USER_ROLE, role);
+    localStorage.setItem(CURRENT_USER_ROLE_KEY, role);
     notifyListeners();
   },
 
-  getCurrentUser() {
-    const role = this.getCurrentRole();
-    return DEMO_USERS[role] || DEMO_USERS.trader;
+  getCurrentUser,
+
+  getBusinessProfile(userId = getCurrentUser().id) {
+    return getStoredProfile(userId);
   },
 
-  // Instruments
-  getInstruments(): Instrument[] {
-    this.initStorage();
-    try {
-      return JSON.parse(localStorage.getItem(KEYS.INSTRUMENTS) || '[]');
-    } catch {
-      return INITIAL_INSTRUMENTS;
-    }
-  },
-
-  saveInstrument(inst: Omit<Instrument, 'id' | 'createdAt'>): Instrument {
-    const instruments = this.getInstruments();
-    const newInst: Instrument = {
-      ...inst,
-      id: `INST-${inst.category.substring(0, 2).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      createdAt: new Date().toISOString().split('T')[0],
+  saveBusinessProfile(profile: Omit<BusinessProfile, 'id' | 'merchantId' | 'createdAt' | 'updatedAt' | 'stateCode' | 'onboardingCompleted'>) {
+    const existing = getStoredProfile(profile.userId);
+    const now = new Date().toISOString();
+    const merchantId = existing?.merchantId || generateMerchantId(profile.state);
+    const savedProfile: BusinessProfile = {
+      ...profile,
+      id: existing?.id || `BUS-${crypto.randomUUID()}`,
+      merchantId,
+      stateCode: stateCodes[profile.state] || 'IN',
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+      onboardingCompleted: true,
     };
-    instruments.unshift(newInst);
-    localStorage.setItem(KEYS.INSTRUMENTS, JSON.stringify(instruments));
+    writeValue(profileKey(profile.userId), savedProfile);
 
-    this.addAuditLog('INSTRUMENT_REGISTERED', `Registered new ${inst.category}: ${inst.title} (${inst.serialNumber})`, newInst.id);
-    notifyListeners();
-    return newInst;
-  },
-
-  // Applications
-  getApplications(): VerificationApplication[] {
-    this.initStorage();
-    try {
-      return JSON.parse(localStorage.getItem(KEYS.APPLICATIONS) || '[]');
-    } catch {
-      return INITIAL_APPLICATIONS;
+    if (!existing) {
+      const merchants = getMerchants();
+      merchants[merchantId] = {
+        merchantId,
+        userId: profile.userId,
+        businessProfileId: savedProfile.id,
+        stateCode: savedProfile.stateCode,
+        status: 'ACTIVE',
+        createdAt: now,
+      };
+      writeValue(MERCHANTS_KEY, merchants);
     }
+
+    addAuditLog(existing ? 'BUSINESS_PROFILE_UPDATED' : 'BUSINESS_PROFILE_CREATED', `Business profile saved for ${savedProfile.businessName}`, savedProfile.id);
+    notifyListeners();
+    return savedProfile;
   },
 
-  getApplicationByNo(queryNo: string): VerificationApplication | undefined {
-    const apps = this.getApplications();
-    const q = queryNo.trim().toUpperCase();
-    return apps.find((a) => a.applicationNo.toUpperCase() === q || a.id.toUpperCase() === q);
-  },
+  getInstruments,
 
-  createApplication(
-    instrumentId: string,
-    applicationType: 'VERIFICATION' | 'RE_VERIFICATION',
-    feeAmount: number,
-    preferredDate?: string
-  ): VerificationApplication {
-    const instruments = this.getInstruments();
-    const inst = instruments.find((i) => i.id === instrumentId);
-    if (!inst) throw new Error('Instrument not found');
-
-    const applications = this.getApplications();
-    const appNo = `DEMO-APP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-    const newApp: VerificationApplication = {
-      id: appNo,
-      applicationNo: appNo,
-      instrumentId: inst.id,
-      instrumentTitle: inst.title,
-      category: inst.category,
-      serialNumber: inst.serialNumber,
-      ownerId: inst.ownerId,
-      ownerName: inst.ownerName,
-      ownerEmail: inst.ownerEmail,
-      applicationType,
-      submissionDate: dateStr,
-      scheduledInspectionDate: preferredDate || '18 Sep 2026',
-      assignedOfficerId: 'USR-OFFICER-102',
-      assignedOfficerName: 'Demo Officer',
-      feeAmount,
-      paymentStatus: 'PAID',
-      paymentTransactionId: `TXN-UPI-${Math.floor(100000000 + Math.random() * 900000000)}`,
-      status: 'SUBMITTED',
-      documents: {
-        purchaseInvoice: inst.invoiceUrl || 'purchase_invoice.pdf',
-        instrumentPhoto: inst.photoUrl || 'instrument_photo.jpg',
-      },
-      timeline: [
-        { title: 'Application Submitted', description: 'Application filed online by trader', timestamp: `${dateStr} 10:30 AM`, completed: true },
-        { title: 'Documents Verified', description: 'Under document verification review', completed: false },
-        { title: 'Fee Paid', description: `Demo payment record ₹${feeAmount} completed`, timestamp: `${dateStr} 10:35 AM`, completed: true },
-        { title: 'Officer Assigned', description: 'Assigned to Demo Officer', completed: false },
-        { title: 'Inspection Scheduled', description: 'Scheduled field inspection', completed: false },
-        { title: 'Inspection Completed', description: 'Prototype inspection record pending', completed: false },
-        { title: 'Certificate Issued', description: 'Prototype certificate processing pending', completed: false },
-      ],
+  saveInstrument(instrument: Omit<Instrument, 'id' | 'createdAt' | 'ownerId' | 'ownerName' | 'ownerEmail' | 'ownerPhone' | 'merchantId'>) {
+    const user = getCurrentUser();
+    const profile = getStoredProfile(user.id);
+    const newInstrument: Instrument = {
+      ...instrument,
+      id: `INST-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      createdAt: todayISO(),
+      ownerId: user.id,
+      ownerName: profile?.businessName || user.name,
+      ownerEmail: profile?.email || user.email,
+      ownerPhone: profile?.mobile || user.phone || '',
+      merchantId: profile?.merchantId,
     };
-
-    applications.unshift(newApp);
-    localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(applications));
-
-    inst.status = 'VERIFICATION_PENDING';
-    localStorage.setItem(KEYS.INSTRUMENTS, JSON.stringify(instruments));
-
-    this.addAuditLog('APPLICATION_SUBMITTED', `Application ${appNo} submitted for ${inst.title}`, newApp.id);
+    setRecordsForUser('instruments', user.id, [newInstrument, ...getRecordsForUser<Instrument>('instruments', user.id)]);
+    addAuditLog('INSTRUMENT_REGISTERED', `Registered ${newInstrument.title}`, newInstrument.id);
     notifyListeners();
-    return newApp;
+    return newInstrument;
   },
 
-  updateApplicationStatus(
-    appId: string,
-    status: VerificationApplication['status'],
-    rejectionReason?: string,
-    officerName?: string,
-    scheduledDate?: string
-  ) {
-    const applications = this.getApplications();
-    const appIndex = applications.findIndex((a) => a.id === appId);
-    if (appIndex === -1) return;
+  getApplications,
 
-    const app = applications[appIndex];
-    app.status = status;
-    if (rejectionReason) app.rejectionReason = rejectionReason;
-    if (officerName) app.assignedOfficerName = officerName;
-    if (scheduledDate) app.scheduledInspectionDate = scheduledDate;
-
-    const nowStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' 02:00 PM';
-    if (status === 'DOCUMENTS_VERIFIED') {
-      app.timeline[1].completed = true;
-      app.timeline[1].timestamp = nowStr;
-    } else if (status === 'INSPECTION_SCHEDULED') {
-      app.timeline[1].completed = true;
-      app.timeline[3].completed = true;
-      app.timeline[4].completed = true;
-      app.timeline[4].timestamp = nowStr;
-      app.timeline[4].current = true;
-    }
-
-    applications[appIndex] = app;
-    localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(applications));
-
-    this.addAuditLog('APPLICATION_UPDATED', `Application ${app.applicationNo} updated to status ${status}`, app.id);
-    notifyListeners();
-  },
-
-  // Certificates
-  getCertificates(): DigitalCertificate[] {
-    this.initStorage();
-    try {
-      return JSON.parse(localStorage.getItem(KEYS.CERTIFICATES) || '[]');
-    } catch {
-      return INITIAL_CERTIFICATES;
-    }
-  },
-
-  getCertificateByNumber(certNo: string): DigitalCertificate | undefined {
-    const certs = this.getCertificates();
-    const queryClean = certNo.trim().toUpperCase();
-    return certs.find(
-      (c) =>
-        c.certNo.toUpperCase() === queryClean ||
-        c.applicationId.toUpperCase() === queryClean ||
-        c.instrumentId.toUpperCase() === queryClean ||
-        c.serialNumber.toUpperCase() === queryClean
+  getApplicationByNo(query: string) {
+    const normalizedQuery = parseVerificationReference(query).toUpperCase();
+    return getAllScopedRecords<VerificationApplication>('applications').find((application) =>
+      [application.applicationNo, application.id].some((value) => value.toUpperCase() === normalizedQuery),
     );
   },
 
-  // Field Inspection & Pass/Fail Decision Workflow
-  submitInspectionAndGenerateCertificate(
-    appId: string,
-    inspectionData: Omit<InspectionRecord, 'id' | 'submittedAt'>
-  ): { inspection: InspectionRecord; certificate?: DigitalCertificate } {
-    const applications = this.getApplications();
-    const appIndex = applications.findIndex((a) => a.id === appId);
-    if (appIndex === -1) throw new Error('Application not found');
+  createApplication(instrumentId: string, applicationType: 'VERIFICATION' | 'RE_VERIFICATION', feeAmount: number, preferredDate?: string) {
+    const user = getCurrentUser();
+    const instruments = getRecordsForUser<Instrument>('instruments', user.id);
+    const instrument = instruments.find((item) => item.id === instrumentId);
+    if (!instrument) throw new Error('Instrument not found for this account.');
 
-    const app = applications[appIndex];
-    const instruments = this.getInstruments();
-    const instIndex = instruments.findIndex((i) => i.id === app.instrumentId);
-    const inst = instruments[instIndex];
-
-    const inspections = JSON.parse(localStorage.getItem(KEYS.INSPECTIONS) || '[]');
-    const nowStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' 03:00 PM';
-    const todayISO = new Date().toISOString().split('T')[0];
-
-    const inspectionRecord: InspectionRecord = {
-      ...inspectionData,
-      id: `INSP-2026-${Math.floor(100 + Math.random() * 900)}`,
-      submittedAt: nowStr,
+    const profile = getStoredProfile(user.id);
+    const applicationNo = `APP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const submissionDate = displayDate();
+    const application: VerificationApplication = {
+      id: `APP-${crypto.randomUUID()}`,
+      applicationNo,
+      instrumentId: instrument.id,
+      instrumentTitle: instrument.title,
+      category: instrument.category,
+      serialNumber: instrument.serialNumber,
+      ownerId: user.id,
+      ownerName: profile?.businessName || user.name,
+      ownerEmail: profile?.email || user.email,
+      merchantId: profile?.merchantId,
+      applicationType,
+      submissionDate,
+      scheduledInspectionDate: preferredDate || undefined,
+      feeAmount,
+      paymentStatus: 'PENDING',
+      status: 'SUBMITTED',
+      documents: {},
+      timeline: [
+        { title: 'Application submitted', description: 'Your application has been recorded in AccuMate.', timestamp: submissionDate, completed: true },
+        { title: 'Review', description: 'Awaiting workflow review.', completed: false, current: true },
+        { title: 'Inspection', description: 'An inspection update will appear here when scheduled.', completed: false },
+        { title: 'Certificate', description: 'A certificate record is created after a successful recorded outcome.', completed: false },
+      ],
     };
-    inspections.unshift(inspectionRecord);
-    localStorage.setItem(KEYS.INSPECTIONS, JSON.stringify(inspections));
-
-    let createdCert: DigitalCertificate | undefined;
-
-    if (inspectionData.finalResult === 'PASS') {
-      const validUntil = new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0];
-      const certNo = `DEMO-CERT-2026-${Math.floor(100000 + Math.random() * 900000)}`;
-      const certsList = this.getCertificates();
-
-      const hash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-
-      createdCert = {
-        certNo,
-        applicationId: app.id,
-        instrumentId: app.instrumentId,
-        ownerName: app.ownerName,
-        ownerEmail: app.ownerEmail,
-        ownerPhone: inst?.ownerPhone || '+91 98765 43210',
-        ownerAddress: inst?.locationAddress || 'Okhla Industrial Area, New Delhi',
-        instrumentCategory: app.category,
-        manufacturer: inst?.manufacturer || 'Standard Metrology Equipment',
-        modelNumber: inst?.modelNumber || 'STD-2026',
-        serialNumber: app.serialNumber,
-        capacity: inst?.capacity || 'Standard Capacity',
-        verificationDate: todayISO,
-        validUntilDate: validUntil,
-        issuingOfficerName: inspectionData.officerName,
-        issuingOfficerDesignation: 'Prototype Issuing Role',
-        verificationAuthority: 'AccuMate prototype record',
-        securityHash: hash,
-        qrCodeUrl: `https://accumate.example/verify?cert=${certNo}`,
-        status: 'VALID',
-      };
-
-      certsList.unshift(createdCert);
-      localStorage.setItem(KEYS.CERTIFICATES, JSON.stringify(certsList));
-
-      app.status = 'CERTIFICATE_GENERATED';
-      app.timeline.forEach((step) => {
-        step.completed = true;
-        if (!step.timestamp) step.timestamp = nowStr;
-      });
-      applications[appIndex] = app;
-      localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(applications));
-
-      if (inst) {
-        inst.status = 'VERIFIED';
-        inst.currentCertNo = certNo;
-        inst.certExpiryDate = validUntil;
-        instruments[instIndex] = inst;
-        localStorage.setItem(KEYS.INSTRUMENTS, JSON.stringify(instruments));
-      }
-
-      this.addAuditLog(
-        'CERTIFICATE_GENERATED',
-        `Digital certificate ${certNo} generated for ${app.instrumentTitle} (PASS)`,
-        certNo
-      );
-    } else {
-      app.status = 'REJECTED';
-      app.rejectionReason = `Failed field inspection tolerances. Observations: ${inspectionData.observations}`;
-      applications[appIndex] = app;
-      localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(applications));
-
-      if (inst) {
-        inst.status = 'REJECTED';
-        instruments[instIndex] = inst;
-        localStorage.setItem(KEYS.INSTRUMENTS, JSON.stringify(instruments));
-      }
-
-      this.addAuditLog(
-        'FIELD_INSPECTION_FAILED',
-        `Field inspection FAILED for ${app.instrumentTitle}. Reason: ${inspectionData.observations}`,
-        app.id
-      );
-    }
-
+    setRecordsForUser('applications', user.id, [application, ...getRecordsForUser<VerificationApplication>('applications', user.id)]);
+    instrument.status = 'VERIFICATION_PENDING';
+    setRecordsForUser('instruments', user.id, instruments);
+    addAuditLog('APPLICATION_SUBMITTED', `Application ${applicationNo} submitted for ${instrument.title}`, application.id);
     notifyListeners();
-    return { inspection: inspectionRecord, certificate: createdCert };
+    return application;
   },
 
-  // Audit Logs
-  getAuditLogs(): AuditLog[] {
-    this.initStorage();
-    try {
-      return JSON.parse(localStorage.getItem(KEYS.AUDIT_LOGS) || '[]');
-    } catch {
-      return INITIAL_AUDIT_LOGS;
+  updateApplicationStatus(appId: string, status: VerificationApplication['status'], rejectionReason?: string, officerName?: string, scheduledDate?: string) {
+    const application = getAllScopedRecords<VerificationApplication>('applications').find((item) => item.id === appId);
+    if (!application) return;
+
+    const applications = getRecordsForUser<VerificationApplication>('applications', application.ownerId);
+    const index = applications.findIndex((item) => item.id === appId);
+    if (index < 0) return;
+    applications[index] = {
+      ...applications[index],
+      status,
+      rejectionReason: rejectionReason || applications[index].rejectionReason,
+      assignedOfficerName: officerName || applications[index].assignedOfficerName,
+      scheduledInspectionDate: scheduledDate || applications[index].scheduledInspectionDate,
+    };
+    setRecordsForUser('applications', application.ownerId, applications);
+    notifyListeners();
+  },
+
+  getCertificates,
+
+  getCertificateByNumber(query: string) {
+    const normalizedQuery = parseVerificationReference(query).toUpperCase();
+    return getAllScopedRecords<DigitalCertificate>('certificates').find((certificate) =>
+      [certificate.certNo, certificate.verificationToken, certificate.applicationId, certificate.instrumentId]
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toUpperCase() === normalizedQuery),
+    );
+  },
+
+  submitInspectionAndGenerateCertificate(appId: string, inspectionData: Omit<InspectionRecord, 'id' | 'submittedAt'>): { inspection: InspectionRecord; certificate?: DigitalCertificate } {
+    const application = getAllScopedRecords<VerificationApplication>('applications').find((item) => item.id === appId);
+    if (!application) throw new Error('Application not found.');
+
+    const inspection: InspectionRecord = {
+      ...inspectionData,
+      id: `INSP-${crypto.randomUUID()}`,
+      submittedAt: new Date().toISOString(),
+    };
+    setRecordsForUser('inspections', application.ownerId, [inspection, ...getRecordsForUser<InspectionRecord>('inspections', application.ownerId)]);
+
+    if (inspectionData.finalResult !== 'PASS') {
+      this.updateApplicationStatus(appId, 'REJECTED', inspectionData.observations);
+      return { inspection };
     }
-  },
 
-  addAuditLog(action: string, details: string, targetId: string) {
-    const user = this.getCurrentUser();
-    const logs = this.getAuditLogs();
-    const newLog: AuditLog = {
-      id: `LOG-${Math.floor(10000 + Math.random() * 90000)}`,
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      userId: user.id,
-      userName: user.name,
-      userRole: user.role,
-      action,
-      targetId,
-      details,
-      ipAddress: '14.139.60.10',
+    const profile = getStoredProfile(application.ownerId);
+    const instruments = getRecordsForUser<Instrument>('instruments', application.ownerId);
+    const instrumentIndex = instruments.findIndex((item) => item.id === application.instrumentId);
+    const instrument = instruments[instrumentIndex];
+    const verificationToken = crypto.randomUUID();
+    const certificate: DigitalCertificate = {
+      certNo: `ACCU-CERT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
+      applicationId: application.id,
+      instrumentId: application.instrumentId,
+      ownerName: profile?.businessName || application.ownerName,
+      ownerEmail: application.ownerEmail,
+      ownerPhone: profile?.mobile || '',
+      ownerAddress: profile ? `${profile.addressLine1}, ${profile.city}, ${profile.state} ${profile.pinCode}` : instrument?.locationAddress || '',
+      businessName: profile?.businessName || application.ownerName,
+      merchantId: profile?.merchantId || application.merchantId,
+      instrumentCategory: application.category,
+      manufacturer: instrument?.manufacturer || '',
+      modelNumber: instrument?.modelNumber || '',
+      serialNumber: application.serialNumber,
+      capacity: instrument?.capacity || '',
+      verificationDate: todayISO(),
+      validUntilDate: new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0],
+      issuingOfficerName: inspectionData.officerName,
+      issuingOfficerDesignation: 'AccuMate reviewing role',
+      verificationAuthority: 'AccuMate prototype record',
+      securityHash: crypto.randomUUID().replaceAll('-', ''),
+      qrCodeUrl: `/verify-certificate?id=${encodeURIComponent(verificationToken)}`,
+      verificationToken,
+      status: 'VALID',
     };
-    logs.unshift(newLog);
-    localStorage.setItem(KEYS.AUDIT_LOGS, JSON.stringify(logs.slice(0, 100)));
+    setRecordsForUser('certificates', application.ownerId, [certificate, ...getRecordsForUser<DigitalCertificate>('certificates', application.ownerId)]);
+
+    if (instrument) {
+      instruments[instrumentIndex] = { ...instrument, status: 'VERIFIED', currentCertNo: certificate.certNo, certExpiryDate: certificate.validUntilDate };
+      setRecordsForUser('instruments', application.ownerId, instruments);
+    }
+    this.updateApplicationStatus(appId, 'CERTIFICATE_GENERATED');
+    notifyListeners();
+    return { inspection, certificate };
   },
 
-  // Expiry Alerts
-  getExpiryAlerts(): ExpiryAlert[] {
-    const instruments = this.getInstruments();
-    const today = new Date();
-    const alerts: ExpiryAlert[] = [];
-
-    instruments.forEach((inst) => {
-      if (inst.certExpiryDate) {
-        const expiry = new Date(inst.certExpiryDate);
-        const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 3600 * 24));
-
-        let severity: ExpiryAlert['severity'] | null = null;
-        if (diffDays < 0) severity = 'EXPIRED';
-        else if (diffDays <= 7) severity = 'CRITICAL';
-        else if (diffDays <= 30) severity = 'HIGH';
-        else if (diffDays <= 60) severity = 'MEDIUM';
-
-        if (severity) {
-          alerts.push({
-            instrumentId: inst.id,
-            instrumentTitle: inst.title,
-            category: inst.category,
-            serialNumber: inst.serialNumber,
-            certNo: inst.currentCertNo || 'N/A',
-            expiryDate: inst.certExpiryDate,
-            daysRemaining: diffDays,
-            severity,
-          });
-        }
-      }
-    });
-
-    return alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
-  },
-
-  // Analytics Stats
-  getAnalyticsStats(): AnalyticsStats {
-    const instruments = this.getInstruments();
-    const applications = this.getApplications();
-    const alerts = this.getExpiryAlerts();
-
-    const pending = applications.filter((a) => a.status !== 'CERTIFICATE_GENERATED' && a.status !== 'REJECTED').length;
-    const completed = applications.filter((a) => a.status === 'CERTIFICATE_GENERATED').length;
-    const rejected = applications.filter((a) => a.status === 'REJECTED').length;
-    const totalRev = applications.reduce((acc, a) => acc + (a.paymentStatus === 'PAID' ? a.feeAmount : 0), 0);
-
-    const expired = alerts.filter((a) => a.severity === 'EXPIRED').length;
-    const expiring = alerts.filter((a) => a.severity !== 'EXPIRED').length;
-
-    return {
-      totalInstruments: instruments.length,
-      totalApplications: applications.length,
-      pendingApplications: pending,
-      completedVerifications: completed,
-      rejectedApplications: rejected,
-      expiringCertificates: expiring,
-      expiredCertificates: expired,
-      totalRevenue: totalRev,
-    };
-  },
+  getAuditLogs,
+  addAuditLog,
+  getExpiryAlerts,
+  getAnalyticsStats,
 
   resetAllData() {
-    localStorage.setItem(KEYS.INSTRUMENTS, JSON.stringify(INITIAL_INSTRUMENTS));
-    localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(INITIAL_APPLICATIONS));
-    localStorage.setItem(KEYS.CERTIFICATES, JSON.stringify(INITIAL_CERTIFICATES));
-    localStorage.setItem(KEYS.INSPECTIONS, JSON.stringify(INITIAL_INSPECTIONS));
-    localStorage.setItem(KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
-    localStorage.setItem(KEYS.CURRENT_USER_ROLE, 'trader');
+    const user = getCurrentUser();
+    localStorage.removeItem(profileKey(user.id));
+    ['instruments', 'applications', 'certificates', 'inspections', 'audit_logs'].forEach((collection) => localStorage.removeItem(scopedKey(collection, user.id)));
     notifyListeners();
   },
 };
+
+export { stateCodes };

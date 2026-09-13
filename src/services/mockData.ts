@@ -12,12 +12,12 @@ import type {
 export const DEMO_USERS: Record<string, User> = {
   trader: {
     id: 'USR-TRADER-001',
-    name: 'Sample Trader',
+    name: 'New Trader',
     email: 'trader@demo.com',
     role: 'trader',
-    designation: 'Managing Director',
-    organization: 'Sample Trading Organisation',
-    phone: '+91 98765 43210',
+    designation: '',
+    organization: '',
+    phone: '',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
   },
   officer: {

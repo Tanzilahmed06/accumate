@@ -24,11 +24,9 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
   const [capacity, setCapacity] = useState('');
   const [accuracyClass, setAccuracyClass] = useState('Class III');
   const [locationAddress, setLocationAddress] = useState('');
-  const [city, setCity] = useState('New Delhi');
-  const [state, setState] = useState('Delhi');
-  const [purchaseDate, setPurchaseDate] = useState('2025-06-15');
-  const [prevCertNo] = useState('');
-  const [photoUrl] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState('');
   const [invoiceUploaded, setInvoiceUploaded] = useState(false);
   const [photoUploaded, setPhotoUploaded] = useState(false);
   const [error, setError] = useState('');
@@ -40,13 +38,11 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
       return;
     }
 
-    const samplePhoto = photoUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80';
-
     StorageService.saveInstrument({
       title,
       category,
       manufacturer,
-      modelNumber: modelNumber || 'STD-MODEL-2026',
+      modelNumber: modelNumber || 'Not specified',
       serialNumber,
       capacity,
       accuracyClass,
@@ -54,14 +50,9 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
       city,
       state,
       purchaseDate,
-      ownerId: 'USR-TRADER-001',
-      ownerName: 'Sample Trader',
-      ownerEmail: 'trader@demo.com',
-      ownerPhone: '+91 98765 43210',
       status: 'REGISTERED',
-      currentCertNo: prevCertNo || undefined,
-      photoUrl: samplePhoto,
-      invoiceUrl: 'invoice_uploaded.pdf',
+      photoUrl: photoUploaded ? 'instrument_photo_attached' : undefined,
+      invoiceUrl: invoiceUploaded ? 'purchase_invoice_attached' : undefined,
     });
 
     onSuccess();
@@ -79,7 +70,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
             </div>
             <div>
               <h3 className="font-bold text-lg font-heading">Register Weighing / Measuring Instrument</h3>
-              <p className="text-xs text-slate-400">Prototype instrument registration form · demo data</p>
+              <p className="text-xs text-slate-400">Add the equipment details you want to manage in AccuMate.</p>
             </div>
           </div>
           <button
@@ -107,7 +98,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
                 <label className="block text-xs font-medium text-slate-700 mb-1">Instrument Title / Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Heavy Duty Electronic Weighbridge 60 Tonnes"
+                  placeholder="Enter an instrument name"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -135,7 +126,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
                 <label className="block text-xs font-medium text-slate-700 mb-1">Serial Number *</label>
                 <input
                   type="text"
-                  placeholder="e.g. SN-WB-2026-904"
+                  placeholder="Enter serial number"
                   value={serialNumber}
                   onChange={(e) => setSerialNumber(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
@@ -147,7 +138,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
                 <label className="block text-xs font-medium text-slate-700 mb-1">Manufacturer *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Avery India Ltd / Essae Teraoka"
+                  placeholder="Enter manufacturer"
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -159,7 +150,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
                 <label className="block text-xs font-medium text-slate-700 mb-1">Model Number</label>
                 <input
                   type="text"
-                  placeholder="e.g. AV-WB-60T"
+                  placeholder="Enter model number"
                   value={modelNumber}
                   onChange={(e) => setModelNumber(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
@@ -170,7 +161,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
                 <label className="block text-xs font-medium text-slate-700 mb-1">Maximum Capacity *</label>
                 <input
                   type="text"
-                  placeholder="e.g. 60,000 kg (60 Tonnes)"
+                  placeholder="Enter capacity or range"
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -203,7 +194,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
                 <label className="block text-xs font-medium text-slate-700 mb-1">Physical Installation Address *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Plot 45, Okhla Industrial Area Phase-3"
+                  placeholder="Enter installation address"
                   value={locationAddress}
                   onChange={(e) => setLocationAddress(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
