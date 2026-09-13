@@ -42,6 +42,7 @@ export default function App() {
 
   // App data state synced with StorageService
   const [currentUser, setCurrentUser] = useState<User>(() => StorageService.getCurrentUser());
+  const [isDemoMode, setIsDemoMode] = useState(() => StorageService.isDemoMode());
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | undefined>(() => StorageService.getBusinessProfile());
   const [instruments, setInstruments] = useState<Instrument[]>(() => StorageService.getInstruments());
   const [applications, setApplications] = useState<VerificationApplication[]>(() => StorageService.getApplications());
@@ -68,6 +69,7 @@ export default function App() {
   // Sync data whenever StorageService triggers a change
   const refreshData = () => {
     setCurrentUser(StorageService.getCurrentUser());
+    setIsDemoMode(StorageService.isDemoMode());
     setBusinessProfile(StorageService.getBusinessProfile());
     setInstruments(StorageService.getInstruments());
     setApplications(StorageService.getApplications());
@@ -102,9 +104,19 @@ export default function App() {
   };
 
   // Handle Login Success
-  const handleLoginSuccess = (role: UserRole) => {
+  const handleLoginSuccess = (role: UserRole, identity: { email: string; mobile: string }) => {
+    const user = StorageService.authenticateUser({ role, ...identity });
+    setCurrentUser(user);
     handleRoleChange(role);
-    setShowOnboarding(role === 'trader' && !StorageService.getBusinessProfile());
+    setShowOnboarding(role === 'trader' && !StorageService.isOnboardingCompleted());
+    setIsAuthenticated(true);
+  };
+
+  const handleLoadDemoWorkspace = () => {
+    const demoUser = StorageService.loadDemoWorkspace();
+    setCurrentUser(demoUser);
+    handleRoleChange('trader');
+    setShowOnboarding(false);
     setIsAuthenticated(true);
   };
 
@@ -165,6 +177,7 @@ export default function App() {
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
+        onLoadDemoWorkspace={handleLoadDemoWorkspace}
         onOpenPublicVerify={() => handleOpenPublicVerify()}
       />
     );
@@ -199,6 +212,12 @@ export default function App() {
         onLogout={handleLogout}
         expiryCount={expiryAlerts.length}
       />
+
+      {isDemoMode && (
+        <div className="border-y border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-bold tracking-[0.12em] text-amber-800">
+          DEMO MODE
+        </div>
+      )}
 
       {/* Main Layout Container */}
       <div className="flex-1 flex max-w-7xl w-full mx-auto">

@@ -11,11 +11,20 @@ import type {
   UserRole,
   VerificationApplication,
 } from '../types';
-import { DEMO_USERS } from './mockData';
+import {
+  DEMO_USERS,
+  INITIAL_APPLICATIONS,
+  INITIAL_AUDIT_LOGS,
+  INITIAL_CERTIFICATES,
+  INITIAL_INSPECTIONS,
+  INITIAL_INSTRUMENTS,
+} from './mockData';
 
 const KEY_PREFIX = 'accumate';
 const STORAGE_VERSION_KEY = `${KEY_PREFIX}_storage_version`;
 const CURRENT_USER_ROLE_KEY = `${KEY_PREFIX}_user_role_v3`;
+const CURRENT_USER_KEY = `${KEY_PREFIX}_current_user_v1`;
+const DEMO_MODE_KEY = `${KEY_PREFIX}_demo_mode_v1`;
 const MERCHANTS_KEY = `${KEY_PREFIX}_merchants_v3`;
 
 type StorageListener = () => void;
@@ -64,6 +73,16 @@ const stateCodes: Record<string, string> = {
 
 const scopedKey = (collection: string, userId: string) => `${KEY_PREFIX}_${collection}_v3_${userId}`;
 const profileKey = (userId: string) => `${KEY_PREFIX}_business_${userId}`;
+const demoUserId = DEMO_USERS.trader.id;
+const anonymousUser: User = {
+  id: 'USR-ANONYMOUS',
+  name: 'New Trader',
+  email: '',
+  role: 'trader',
+  designation: '',
+  organization: '',
+  phone: '',
+};
 
 function notifyListeners() {
   listeners.forEach((listener) => listener());
@@ -103,27 +122,31 @@ function setRecordsForUser<T>(collection: string, userId: string, records: T[]) 
 }
 
 function getAllScopedRecords<T extends ScopedRecord>(collection: string): T[] {
+  if (isDemoMode()) return getRecordsForUser<T>(collection, demoUserId);
+
   const keyStart = `${KEY_PREFIX}_${collection}_v3_`;
   const records: T[] = [];
 
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (key?.startsWith(keyStart)) records.push(...readValue<T[]>(key, []));
+    if (key?.startsWith(keyStart) && !key.endsWith(`_${demoUserId}`)) records.push(...readValue<T[]>(key, []));
   }
 
   return records;
 }
 
 function getCurrentRole(): UserRole {
-  return (localStorage.getItem(CURRENT_USER_ROLE_KEY) as UserRole) || 'trader';
+  return readValue<User | undefined>(CURRENT_USER_KEY, undefined)?.role
+    || (localStorage.getItem(CURRENT_USER_ROLE_KEY) as UserRole)
+    || 'trader';
 }
 
-function getCurrentBaseUser(): User {
-  return DEMO_USERS[getCurrentRole()] || DEMO_USERS.trader;
+function isDemoMode() {
+  return localStorage.getItem(DEMO_MODE_KEY) === 'true';
 }
 
 function getCurrentUser(): User {
-  const baseUser = getCurrentBaseUser();
+  const baseUser = readValue<User | undefined>(CURRENT_USER_KEY, undefined) || anonymousUser;
   if (baseUser.role !== 'trader') return baseUser;
 
   const profile = getStoredProfile(baseUser.id);
@@ -136,6 +159,56 @@ function getCurrentUser(): User {
     designation: profile.designation,
     organization: profile.businessName,
     phone: profile.mobile,
+  };
+}
+
+function userIdFromIdentity(role: UserRole, identity: string) {
+  let hash = 0;
+  for (const character of `${role}:${identity}`) {
+    hash = ((hash << 5) - hash + character.charCodeAt(0)) | 0;
+  }
+  return `USR-${role.toUpperCase()}-${(hash >>> 0).toString(36).toUpperCase()}`;
+}
+
+function createAuthenticatedUser(role: UserRole, email: string, mobile: string): User {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedMobile = mobile.replace(/\D/g, '');
+  const identity = normalizedEmail || normalizedMobile;
+
+  return {
+    id: userIdFromIdentity(role, identity),
+    name: normalizedEmail ? normalizedEmail.split('@')[0] : 'New Trader',
+    email: normalizedEmail,
+    role,
+    designation: '',
+    organization: '',
+    phone: normalizedMobile,
+  };
+}
+
+function createDemoProfile(): BusinessProfile {
+  return {
+    id: 'BUS-DEMO-001',
+    userId: demoUserId,
+    businessName: 'Sample Trader (Demo)',
+    legalBusinessName: 'Sample Trader (Demo)',
+    businessType: 'Proprietorship',
+    gstin: '29DEMOX0000D1ZP',
+    pan: 'DEMOX0000D',
+    addressLine1: 'Demo Industrial Estate',
+    city: 'Bengaluru',
+    district: 'Bengaluru Urban',
+    state: 'Karnataka',
+    stateCode: 'KA',
+    pinCode: '560001',
+    contactName: 'Demo Trader',
+    designation: 'Business Owner',
+    mobile: '9000000000',
+    email: 'trader@demo.com',
+    merchantId: 'ACCU-T-KA-DEMO',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    onboardingCompleted: true,
   };
 }
 
@@ -280,13 +353,60 @@ export const StorageService = {
 
   setCurrentRole(role: UserRole) {
     localStorage.setItem(CURRENT_USER_ROLE_KEY, role);
+    const currentUser = readValue<User | undefined>(CURRENT_USER_KEY, undefined);
+    if (currentUser) writeValue(CURRENT_USER_KEY, { ...currentUser, role });
     notifyListeners();
   },
 
   getCurrentUser,
 
+  authenticateUser({ role, email, mobile }: { role: UserRole; email: string; mobile: string }) {
+    const user = createAuthenticatedUser(role, email, mobile);
+    writeValue(CURRENT_USER_KEY, user);
+    localStorage.setItem(CURRENT_USER_ROLE_KEY, role);
+    localStorage.removeItem(DEMO_MODE_KEY);
+    notifyListeners();
+    return user;
+  },
+
+  isDemoMode,
+
+  loadDemoWorkspace() {
+    const demoProfile = createDemoProfile();
+
+    if (!localStorage.getItem(profileKey(demoUserId))) writeValue(profileKey(demoUserId), demoProfile);
+    if (!localStorage.getItem(scopedKey('instruments', demoUserId))) writeValue(scopedKey('instruments', demoUserId), INITIAL_INSTRUMENTS);
+    if (!localStorage.getItem(scopedKey('applications', demoUserId))) writeValue(scopedKey('applications', demoUserId), INITIAL_APPLICATIONS);
+    if (!localStorage.getItem(scopedKey('certificates', demoUserId))) writeValue(scopedKey('certificates', demoUserId), INITIAL_CERTIFICATES);
+    if (!localStorage.getItem(scopedKey('inspections', demoUserId))) writeValue(scopedKey('inspections', demoUserId), INITIAL_INSPECTIONS);
+    if (!localStorage.getItem(scopedKey('audit_logs', demoUserId))) writeValue(scopedKey('audit_logs', demoUserId), INITIAL_AUDIT_LOGS);
+
+    const merchants = getMerchants();
+    if (!merchants[demoProfile.merchantId]) {
+      merchants[demoProfile.merchantId] = {
+        merchantId: demoProfile.merchantId,
+        userId: demoUserId,
+        businessProfileId: demoProfile.id,
+        stateCode: demoProfile.stateCode,
+        status: 'ACTIVE',
+        createdAt: demoProfile.createdAt,
+      };
+      writeValue(MERCHANTS_KEY, merchants);
+    }
+
+    writeValue(CURRENT_USER_KEY, DEMO_USERS.trader);
+    localStorage.setItem(CURRENT_USER_ROLE_KEY, 'trader');
+    localStorage.setItem(DEMO_MODE_KEY, 'true');
+    notifyListeners();
+    return getCurrentUser();
+  },
+
   getBusinessProfile(userId = getCurrentUser().id) {
     return getStoredProfile(userId);
+  },
+
+  isOnboardingCompleted(userId = getCurrentUser().id) {
+    return Boolean(getStoredProfile(userId)?.onboardingCompleted);
   },
 
   saveBusinessProfile(profile: Omit<BusinessProfile, 'id' | 'merchantId' | 'createdAt' | 'updatedAt' | 'stateCode' | 'onboardingCompleted'>) {

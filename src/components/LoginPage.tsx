@@ -15,12 +15,12 @@ import {
   Users,
 } from 'lucide-react';
 import type { UserRole } from '../types';
-import { StorageService } from '../services/storageService';
 import { BrandLogo } from './BrandLogo';
 import { Navbar } from './Navbar';
 
 interface LoginPageProps {
-  onLoginSuccess: (role: UserRole) => void;
+  onLoginSuccess: (role: UserRole, identity: { email: string; mobile: string }) => void;
+  onLoadDemoWorkspace: () => void;
   onOpenPublicVerify: () => void;
 }
 
@@ -28,20 +28,19 @@ const roles: Array<{
   value: UserRole;
   label: string;
   detail: string;
-  email: string;
   icon: React.ElementType;
 }> = [
-  { value: 'trader', label: 'Business owner', detail: 'Manage your instruments', email: 'trader@demo.com', icon: Building2 },
-  { value: 'officer', label: 'Field officer', detail: 'Review and inspect', email: 'officer@demo.com', icon: Award },
-  { value: 'gatc', label: 'Test centre', detail: 'Record test results', email: 'gatc@demo.com', icon: FlaskConical },
-  { value: 'admin', label: 'Department admin', detail: 'Oversee the service', email: 'admin@demo.com', icon: Users },
+  { value: 'trader', label: 'Business owner', detail: 'Manage your instruments', icon: Building2 },
+  { value: 'officer', label: 'Field officer', detail: 'Review and inspect', icon: Award },
+  { value: 'gatc', label: 'Test centre', detail: 'Record test results', icon: FlaskConical },
+  { value: 'admin', label: 'Department admin', detail: 'Oversee the service', icon: Users },
 ];
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenPublicVerify }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onLoadDemoWorkspace, onOpenPublicVerify }) => {
   const [authMethod, setAuthMethod] = useState<'PASSWORD' | 'OTP'>('PASSWORD');
-  const [email, setEmail] = useState('trader@demo.com');
-  const [password, setPassword] = useState('demo1234');
-  const [mobileNumber, setMobileNumber] = useState('9876543210');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('trader');
@@ -59,9 +58,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenPubl
   };
 
   const selectRole = (role: UserRole) => {
-    const account = roles.find((item) => item.value === role);
     setSelectedRole(role);
-    if (account) setEmail(account.email);
     setError('');
   };
 
@@ -91,8 +88,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenPubl
 
     setIsLoading(true);
     window.setTimeout(() => {
-      StorageService.setCurrentRole(selectedRole);
-      onLoginSuccess(selectedRole);
+      onLoginSuccess(selectedRole, { email, mobile: mobileNumber });
       setIsLoading(false);
     }, 650);
   };
@@ -333,7 +329,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenPubl
             </form>
 
             <div className="mt-6 border-t border-slate-100 pt-5 text-center text-xs leading-5 text-slate-500">
-              Using the demo? Select a role above. Demo details are filled in for you.
+              Want to explore sample records? <button type="button" onClick={onLoadDemoWorkspace} className="font-semibold text-indigo-700 hover:text-indigo-900">Load Demo Workspace</button>
             </div>
           </div>
         </section>

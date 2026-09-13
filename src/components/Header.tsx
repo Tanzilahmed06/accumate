@@ -88,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
                 AccuMate
               </h1>
               <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-500/20 text-blue-200 border border-blue-400/30 tracking-wider">
-                DEMO PLATFORM
+                PROTOTYPE
               </span>
             </div>
             <p className="text-xs text-slate-500 hidden sm:block">
@@ -188,12 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <div>
                       <div className="font-medium">{roleLabels[role].label}</div>
-                      <div className="text-[10px] text-slate-500">
-                        {role === 'trader' && 'trader@demo.com'}
-                        {role === 'officer' && 'officer@demo.com'}
-                        {role === 'gatc' && 'gatc@demo.com'}
-                        {role === 'admin' && 'admin@demo.com'}
-                      </div>
+                      <div className="text-[10px] text-slate-500">Authorized workspace</div>
                     </div>
                     {currentUser.role === role && <span className="w-2 h-2 rounded-full bg-amber-400"></span>}
                   </button>

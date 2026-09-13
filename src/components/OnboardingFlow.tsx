@@ -30,7 +30,6 @@ interface FormValues {
 }
 
 const gstinPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/;
-const demoGstin = '29DEMOX0000D1ZP';
 const indianStates = Object.keys(stateCodes).sort((first, second) => first.localeCompare(second));
 const normalizeGstin = (value: string) => value.trim().toUpperCase().replace(/\s+/g, '');
 
@@ -43,7 +42,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete
     businessName: '',
     legalBusinessName: '',
     businessType: '',
-    gstin: demoGstin,
+    gstin: '',
     pan: '',
     addressLine1: '',
     addressLine2: '',

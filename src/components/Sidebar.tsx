@@ -301,7 +301,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="space-y-1 border-t border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-400">
         <div className="flex items-center gap-1.5 font-medium text-slate-300">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span>Demo workspace: available</span>
+          <span>Demo workspace available at sign-in</span>
         </div>
         <div>Prototype records · not an official system</div>
       </div>

@@ -127,8 +127,8 @@ export const TraderDashboard: React.FC<TraderDashboardProps> = ({
 
       {instruments.length === 0 && applications.length === 0 && certificates.length === 0 && (
         <div className="grid gap-4 md:grid-cols-3">
-          <EmptyStateCard title="No instruments yet" text="Register your first instrument to start managing verification records." action="Register Instrument" onClick={onOpenRegisterModal} />
-          <EmptyStateCard title="No applications yet" text="You haven't submitted any verification applications." action="Apply for Verification" onClick={() => onOpenApplyWizard()} />
+          <EmptyStateCard title="No instruments yet" text="Register your first instrument to start managing verification records." action="Add Your First Instrument" onClick={onOpenRegisterModal} />
+          <EmptyStateCard title="No applications yet" text="You haven't submitted any verification applications." action="Start an Application" onClick={() => onOpenApplyWizard()} />
           <EmptyStateCard title="No certificates yet" text="Your verified certificates will appear here." />
         </div>
       )}
