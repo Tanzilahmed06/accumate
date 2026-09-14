@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, CheckCircle, Shield, AlertCircle } from 'lucide-react';
 import type { InstrumentCategory } from '../types';
 import { StorageService } from '../services/storageService';
+import { JUDGE_DEMO_INSTRUMENT } from '../services/mockData';
 
 interface RegisterInstrumentModalProps {
   isOpen: boolean;
@@ -14,22 +15,23 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
   onClose,
   onSuccess,
 }) => {
-  if (!isOpen) return null;
-
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<InstrumentCategory>('Weighing Scale');
-  const [manufacturer, setManufacturer] = useState('');
-  const [modelNumber, setModelNumber] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [accuracyClass, setAccuracyClass] = useState('Class III');
-  const [locationAddress, setLocationAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [purchaseDate, setPurchaseDate] = useState('');
-  const [invoiceUploaded, setInvoiceUploaded] = useState(false);
-  const [photoUploaded, setPhotoUploaded] = useState(false);
+  const isJudgeDemo = StorageService.isDemoMode();
+  const [title, setTitle] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.title : '');
+  const [category, setCategory] = useState<InstrumentCategory>(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.category : 'Weighing Scale');
+  const [manufacturer, setManufacturer] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.manufacturer : '');
+  const [modelNumber, setModelNumber] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.modelNumber : '');
+  const [serialNumber, setSerialNumber] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.serialNumber : '');
+  const [capacity, setCapacity] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.capacity : '');
+  const [accuracyClass, setAccuracyClass] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.accuracyClass || 'Class III' : 'Class III');
+  const [locationAddress, setLocationAddress] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.locationAddress : '');
+  const [city, setCity] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.city : '');
+  const [state, setState] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.state : '');
+  const [purchaseDate, setPurchaseDate] = useState(isJudgeDemo ? JUDGE_DEMO_INSTRUMENT.purchaseDate : '');
+  const [invoiceUploaded, setInvoiceUploaded] = useState(isJudgeDemo);
+  const [photoUploaded, setPhotoUploaded] = useState(isJudgeDemo);
   const [error, setError] = useState('');
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,8 +71,8 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
               <Shield className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <h3 className="font-bold text-lg font-heading">Register Weighing / Measuring Instrument</h3>
-              <p className="text-xs text-slate-400">Add the equipment details you want to manage in AccuMate.</p>
+              <h3 className="font-bold text-lg font-heading">{isJudgeDemo ? 'Add Pre-filled Demo Instrument' : 'Register Weighing / Measuring Instrument'}</h3>
+              <p className="text-xs text-slate-400">{isJudgeDemo ? 'DEMO / PROTOTYPE DATA is pre-filled for the judge presentation.' : 'Add the equipment details you want to manage in AccuMate.'}</p>
             </div>
           </div>
           <button
@@ -282,7 +284,7 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
             >
               <CheckCircle className="w-4 h-4 text-emerald-300" />
-              <span>Register Instrument</span>
+              <span>{isJudgeDemo ? 'Add Demo Instrument' : 'Register Instrument'}</span>
             </button>
           </div>
         </form>

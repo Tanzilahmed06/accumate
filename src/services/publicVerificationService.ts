@@ -90,11 +90,14 @@ export async function findPublicCertificate(reference: string, tokenOnly = false
         },
         body: JSON.stringify({ verification_reference: verificationReference, token_only: tokenOnly }),
       });
-      if (!response.ok) return undefined;
-      const records = await response.json() as Record<string, unknown>[];
-      return records[0] ? toSupabasePublicCertificate(records[0]) : undefined;
+      if (response.ok) {
+        const records = await response.json() as Record<string, unknown>[];
+        const publicCertificate = records[0] ? toSupabasePublicCertificate(records[0]) : undefined;
+        if (publicCertificate) return publicCertificate;
+      }
     } catch {
-      return undefined;
+      // An unavailable remote endpoint must not make the local prototype demo
+      // appear broken. The local fallback still exposes only the public fields.
     }
   }
 

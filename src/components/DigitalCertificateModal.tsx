@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { X, Printer, QrCode, ShieldCheck, CheckCircle2, Award, Lock, Download } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Printer, QrCode, ShieldCheck, CheckCircle2, Award, Lock, Download, Copy, ExternalLink, AlertTriangle } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import type { DigitalCertificate } from '../types';
 
@@ -17,6 +17,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
   onVerifyQR,
 }) => {
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [copied, setCopied] = useState(false);
   if (!isOpen) return null;
 
   const verificationReference = certificate.verificationToken;
@@ -35,6 +36,18 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
     downloadLink.click();
   };
 
+  const handleCopyVerificationLink = async () => {
+    try {
+      await navigator.clipboard.writeText(verificationUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      window.prompt('Copy the permanent verification link:', verificationUrl);
+    }
+  };
+
+  const statusIsValid = certificate.status === 'VALID';
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white border border-slate-300 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden my-8 animate-in fade-in zoom-in-95 relative">
@@ -42,7 +55,7 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
         <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-amber-400" />
-            <h3 className="font-bold text-sm font-heading">Prototype certificate record</h3>
+            <h3 className="font-bold text-sm font-heading">DIGITAL CERTIFICATE</h3>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-500/30">
               DEMO / PROTOTYPE
             </span>
@@ -55,6 +68,12 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
             >
               <QrCode className="w-3.5 h-3.5" />
               <span>Verify QR</span>
+            </button>
+            <button
+              onClick={handleCopyVerificationLink}
+              className="hidden px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 sm:inline-flex sm:items-center sm:gap-1.5"
+            >
+              <Copy className="size-3.5" />{copied ? 'Link copied' : 'Copy verification link'}
             </button>
             <button
               onClick={handlePrint}
@@ -105,13 +124,13 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
             {/* Cert No & Status Bar */}
             <div className="flex items-center justify-between p-4 bg-slate-100/80 rounded-2xl border border-slate-300">
               <div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase">Certificate Serial Number</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase">Certificate Number</div>
                 <div className="text-lg font-extrabold text-slate-900 font-mono tracking-wide">{certificate.certNo}</div>
                 {certificate.merchantId && <div className="mt-1 text-[10px] font-semibold text-slate-600">Merchant ID: <span className="font-mono">{certificate.merchantId}</span></div>}
               </div>
               <div className="text-right">
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-xs">
-                  <CheckCircle2 className="w-4 h-4" />
+                <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold text-white shadow-xs ${statusIsValid ? 'bg-emerald-600' : certificate.status === 'EXPIRED' ? 'bg-amber-600' : 'bg-rose-600'}`}>
+                  {statusIsValid ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                   <span>STATUS: {certificate.status}</span>
                 </span>
               </div>
@@ -193,7 +212,11 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
 
             <div className="no-print border border-slate-200 bg-slate-50 px-4 py-3 text-xs">
               <div className="font-bold uppercase tracking-[0.08em] text-slate-500">Verification URL</div>
-              <a href={verificationUrl} target="_blank" rel="noreferrer" className="mt-1 block break-all font-mono text-[#1558A6] hover:underline">{verificationUrl}</a>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <a href={verificationUrl} target="_blank" rel="noreferrer" className="break-all font-mono text-[#1558A6] hover:underline">{verificationUrl}</a>
+                <button type="button" onClick={() => onVerifyQR(verificationReference)} className="inline-flex items-center gap-1 font-bold text-[#1558A6] hover:underline"><ExternalLink className="size-3" />Open public verification</button>
+                <button type="button" onClick={handleCopyVerificationLink} className="inline-flex items-center gap-1 font-bold text-[#1558A6] hover:underline"><Copy className="size-3" />{copied ? 'Copied' : 'Copy link'}</button>
+              </div>
             </div>
 
             {/* Signatures & Security Hash */}

@@ -21,6 +21,7 @@ import {
   INITIAL_CERTIFICATES,
   INITIAL_INSPECTIONS,
   INITIAL_INSTRUMENTS,
+  JUDGE_DEMO_INSTRUMENT,
 } from './mockData';
 import { buildVerificationPath, buildVerificationUrl, extractVerificationToken, isStaleLegacyVerificationUrl } from './verificationUrl';
 
@@ -31,6 +32,10 @@ const CURRENT_USER_KEY = `${KEY_PREFIX}_current_user_v1`;
 const DEMO_MODE_KEY = `${KEY_PREFIX}_demo_mode_v1`;
 const MERCHANTS_KEY = `${KEY_PREFIX}_merchants_v3`;
 const PLATFORM_USERS_KEY = `${KEY_PREFIX}_platform_users_v1`;
+const DEMO_MERCHANTS_KEY = `${KEY_PREFIX}_judge_demo_merchants_v1`;
+const DEMO_PLATFORM_USERS_KEY = `${KEY_PREFIX}_judge_demo_platform_users_v1`;
+const JUDGE_DEMO_VERSION_KEY = `${KEY_PREFIX}_judge_demo_version`;
+const JUDGE_DEMO_VERSION = '2';
 
 type StorageListener = () => void;
 type ScopedRecord = Instrument | VerificationApplication | DigitalCertificate | AuditLog;
@@ -120,11 +125,11 @@ function getStoredProfile(userId: string): BusinessProfile | undefined {
 }
 
 function getPlatformUsersRecord(): Record<string, PlatformUser> {
-  return readValue<Record<string, PlatformUser>>(PLATFORM_USERS_KEY, {});
+  return readValue<Record<string, PlatformUser>>(isDemoMode() ? DEMO_PLATFORM_USERS_KEY : PLATFORM_USERS_KEY, {});
 }
 
 function writePlatformUsers(users: Record<string, PlatformUser>) {
-  writeValue(PLATFORM_USERS_KEY, users);
+  writeValue(isDemoMode() ? DEMO_PLATFORM_USERS_KEY : PLATFORM_USERS_KEY, users);
 }
 
 function toPlatformUser(user: User, existing?: PlatformUser): PlatformUser {
@@ -154,7 +159,8 @@ function getAllBusinessProfiles(): BusinessProfile[] {
 
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (key?.startsWith(keyStart)) {
+    const isDemoProfile = key?.endsWith(`_${demoUserId}`);
+    if (key?.startsWith(keyStart) && (isDemoMode() ? isDemoProfile : !isDemoProfile)) {
       const profile = readValue<BusinessProfile | undefined>(key, undefined);
       if (profile) profiles.push(profile);
     }
@@ -213,7 +219,8 @@ function ensureCertificateVerificationData() {
 
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (key?.startsWith(keyStart)) certificateKeys.push(key);
+    const isDemoCertificateScope = key?.endsWith(`_${demoUserId}`);
+    if (key?.startsWith(keyStart) && (isDemoMode() ? isDemoCertificateScope : !isDemoCertificateScope)) certificateKeys.push(key);
   }
 
   const usedTokens = new Set<string>();
@@ -298,22 +305,22 @@ function createDemoProfile(): BusinessProfile {
   return {
     id: 'BUS-DEMO-001',
     userId: demoUserId,
-    businessName: 'Sample Trader (Demo)',
-    legalBusinessName: 'Sample Trader (Demo)',
+    businessName: 'Amaan Measurement Solutions',
+    legalBusinessName: 'Amaan Measurement Solutions — DEMO / PROTOTYPE',
     businessType: 'Proprietorship',
-    gstin: '29DEMOX0000D1ZP',
-    pan: 'DEMOX0000D',
-    addressLine1: 'Demo Industrial Estate',
+    gstin: 'DEMO / PROTOTYPE DATA',
+    pan: 'DEMO / PROTOTYPE DATA',
+    addressLine1: 'Peenya Industrial Area',
     city: 'Bengaluru',
-    district: 'Bengaluru Urban',
+    district: 'Bengaluru',
     state: 'Karnataka',
     stateCode: 'KA',
-    pinCode: '560001',
-    contactName: 'Demo Trader',
-    designation: 'Business Owner',
-    mobile: '9000000000',
-    email: 'trader@demo.com',
-    merchantId: 'ACCU-T-KA-DEMO',
+    pinCode: '560058',
+    contactName: 'Arman Khan',
+    designation: 'Proprietor',
+    mobile: '9000004821',
+    email: 'judge-demo-trader@accumate.prototype',
+    merchantId: 'ACCU-T-KA-4821',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     onboardingCompleted: true,
@@ -321,7 +328,11 @@ function createDemoProfile(): BusinessProfile {
 }
 
 function getMerchants(): Record<string, Merchant> {
-  return readValue<Record<string, Merchant>>(MERCHANTS_KEY, {});
+  return readValue<Record<string, Merchant>>(isDemoMode() ? DEMO_MERCHANTS_KEY : MERCHANTS_KEY, {});
+}
+
+function writeMerchants(merchants: Record<string, Merchant>) {
+  writeValue(isDemoMode() ? DEMO_MERCHANTS_KEY : MERCHANTS_KEY, merchants);
 }
 
 function generateMerchantId(state: string) {
@@ -659,7 +670,31 @@ export const StorageService = {
   isDemoMode,
 
   loadDemoWorkspace() {
+    return this.enterDemoRole('trader');
+  },
+
+  enterDemoRole(role: ManagedUserRole) {
     const demoProfile = createDemoProfile();
+    // The demo has its own user and merchant registries. Switching roles never
+    // authenticates as, or changes, a normal platform account.
+    localStorage.setItem(DEMO_MODE_KEY, 'true');
+
+    // Replace only legacy demo records, never normal workspace data. This
+    // makes the new judge script deterministic for people who used an older
+    // sample workspace before the dedicated demo was introduced.
+    if (localStorage.getItem(JUDGE_DEMO_VERSION_KEY) !== JUDGE_DEMO_VERSION) {
+      [
+        profileKey(demoUserId),
+        scopedKey('instruments', demoUserId),
+        scopedKey('applications', demoUserId),
+        scopedKey('certificates', demoUserId),
+        scopedKey('inspections', demoUserId),
+        scopedKey('audit_logs', demoUserId),
+        DEMO_MERCHANTS_KEY,
+        DEMO_PLATFORM_USERS_KEY,
+      ].forEach((key) => localStorage.removeItem(key));
+      localStorage.setItem(JUDGE_DEMO_VERSION_KEY, JUDGE_DEMO_VERSION);
+    }
 
     if (!localStorage.getItem(profileKey(demoUserId))) writeValue(profileKey(demoUserId), demoProfile);
     if (!localStorage.getItem(scopedKey('instruments', demoUserId))) writeValue(scopedKey('instruments', demoUserId), INITIAL_INSTRUMENTS);
@@ -679,14 +714,58 @@ export const StorageService = {
         status: 'ACTIVE',
         createdAt: demoProfile.createdAt,
       };
-      writeValue(MERCHANTS_KEY, merchants);
+      writeMerchants(merchants);
     }
 
-    writeValue(CURRENT_USER_KEY, DEMO_USERS.trader);
-    localStorage.setItem(CURRENT_USER_ROLE_KEY, 'trader');
-    localStorage.setItem(DEMO_MODE_KEY, 'true');
+    const demoUsers = getPlatformUsersRecord();
+    (Object.keys(DEMO_USERS) as Array<keyof typeof DEMO_USERS>).forEach((demoRole) => {
+      const user = DEMO_USERS[demoRole];
+      demoUsers[user.id] = {
+        ...toPlatformUser(user, demoUsers[user.id]),
+        employeeId: demoRole === 'officer' ? 'DEMO-LMO-001' : demoRole === 'admin' ? 'DEMO-ADMIN-001' : undefined,
+        centerName: demoRole === 'gatc' ? 'Demo Government Approved Test Centre' : undefined,
+        centerCode: demoRole === 'gatc' ? 'DEMO-GATC-001' : undefined,
+        city: 'Bengaluru',
+        district: 'Bengaluru',
+        state: 'Karnataka',
+      };
+    });
+    writePlatformUsers(demoUsers);
+
+    const demoUser = DEMO_USERS[role];
+    writeValue(CURRENT_USER_KEY, demoUser);
+    localStorage.setItem(CURRENT_USER_ROLE_KEY, role);
     notifyListeners();
     return getCurrentUser();
+  },
+
+  resetJudgeDemo() {
+    [
+      profileKey(demoUserId),
+      scopedKey('instruments', demoUserId),
+      scopedKey('applications', demoUserId),
+      scopedKey('certificates', demoUserId),
+      scopedKey('inspections', demoUserId),
+      scopedKey('audit_logs', demoUserId),
+      DEMO_MERCHANTS_KEY,
+      DEMO_PLATFORM_USERS_KEY,
+    ].forEach((key) => localStorage.removeItem(key));
+    return this.enterDemoRole('trader');
+  },
+
+  ensureJudgeDemoInstrument() {
+    if (!isDemoMode() || getCurrentUser().role !== 'trader') throw new Error('Open the Business demo before adding the demo instrument.');
+    const existing = getRecordsForUser<Instrument>('instruments', demoUserId)
+      .find((instrument) => instrument.serialNumber === JUDGE_DEMO_INSTRUMENT.serialNumber);
+    return existing || this.saveInstrument(JUDGE_DEMO_INSTRUMENT);
+  },
+
+  submitJudgeDemoApplication() {
+    if (!isDemoMode() || getCurrentUser().role !== 'trader') throw new Error('Open the Business demo before submitting the demo application.');
+    const existing = getRecordsForUser<VerificationApplication>('applications', demoUserId)[0];
+    if (existing) return existing;
+    const instrument = this.ensureJudgeDemoInstrument();
+    return this.createApplication(instrument.id, 'VERIFICATION', 1250, todayISO());
   },
 
   getBusinessProfile(userId = getCurrentUser().id) {
@@ -722,7 +801,7 @@ export const StorageService = {
         status: 'ACTIVE',
         createdAt: now,
       };
-      writeValue(MERCHANTS_KEY, merchants);
+      writeMerchants(merchants);
     }
 
     const users = getPlatformUsersRecord();
@@ -785,9 +864,13 @@ export const StorageService = {
     const profile = getStoredProfile(user.id);
     const stateCode = profile?.stateCode || 'IN';
     const year = new Date().getFullYear();
-    const sequence = getAllScopedRecords<VerificationApplication>('applications')
-      .filter((application) => application.applicationNo.startsWith(`APP-${stateCode}-${year}-`)).length + 1;
-    const applicationNo = `APP-${stateCode}-${year}-${String(sequence).padStart(4, '0')}`;
+    const scopedApplications = getAllScopedRecords<VerificationApplication>('applications');
+    const sequence = isDemoMode()
+      ? scopedApplications.length + 1
+      : scopedApplications.filter((application) => application.applicationNo.startsWith(`APP-${stateCode}-${year}-`)).length + 1;
+    const applicationNo = isDemoMode()
+      ? `ACC-APP-${String(sequence).padStart(4, '0')}`
+      : `APP-${stateCode}-${year}-${String(sequence).padStart(4, '0')}`;
     const submissionDate = displayDate();
     const createdAt = new Date().toISOString();
     const application: VerificationApplication = {
@@ -816,13 +899,13 @@ export const StorageService = {
           changedById: user.id,
           changedByName: user.name,
           changedByRole: user.role,
-          remarks: 'Application submitted.',
+          remarks: isDemoMode() ? 'DEMO / PROTOTYPE application submitted.' : 'Application submitted.',
           timestamp: createdAt,
         },
       ],
       documents: {},
       timeline: [
-        { title: 'Application submitted', description: 'Your application has been recorded in AccuMate.', timestamp: submissionDate, completed: true },
+        { title: 'Application submitted', description: isDemoMode() ? 'DEMO / PROTOTYPE application recorded in AccuMate.' : 'Your application has been recorded in AccuMate.', timestamp: submissionDate, completed: true },
         { title: 'Review', description: 'Awaiting workflow review.', completed: false, current: true },
         { title: 'Inspection', description: 'An inspection update will appear here when scheduled.', completed: false },
         { title: 'Certificate', description: 'A certificate record is created after a successful recorded outcome.', completed: false },
@@ -850,9 +933,13 @@ export const StorageService = {
     const application = getApplicationForUpdate(appId);
     assertWorkflowAccess(application, ['officer', 'admin']);
     const actor = getCurrentUser();
+    const demoGatc = isDemoMode() ? DEMO_USERS.gatc : undefined;
     return saveWorkflowUpdate(appId, 'UNDER_REVIEW', 'APPLICATION_REVIEW_STARTED', reviewNotes || 'Field officer started the application review.', {
       assignedOfficerId: application.assignedOfficerId || actor.id,
       assignedOfficerName: application.assignedOfficerName || actor.name,
+      assignedGATCId: application.assignedGATCId || demoGatc?.id,
+      assignedGATCName: application.assignedGATCName || demoGatc?.name,
+      assignedTestCenterAt: application.assignedTestCenterAt || (demoGatc ? new Date().toISOString() : undefined),
       reviewNotes: reviewNotes || application.reviewNotes,
     });
   },
@@ -881,6 +968,16 @@ export const StorageService = {
       scheduledInspectionDate: inspectionDate,
       reviewNotes: remarks || application.reviewNotes,
     });
+  },
+
+  startFieldInspection(appId: string) {
+    const application = getApplicationForUpdate(appId);
+    assertWorkflowAccess(application, ['officer', 'admin']);
+    if (!['INSPECTION_SCHEDULED', 'INSPECTION_IN_PROGRESS'].includes(application.status)) {
+      throw new Error('Schedule the inspection before starting field work.');
+    }
+    if (application.status === 'INSPECTION_IN_PROGRESS') return application;
+    return saveWorkflowUpdate(appId, 'INSPECTION_IN_PROGRESS', 'FIELD_INSPECTION_STARTED', 'Field inspection started for the DEMO / PROTOTYPE record.');
   },
 
   assignTestCenter(appId: string, testCenterId: string, remarks?: string) {
@@ -939,11 +1036,37 @@ export const StorageService = {
   },
 
   getPublicCertificateByVerificationToken(verificationToken: string) {
-    ensureCertificateVerificationData();
     const normalizedToken = extractVerificationToken(verificationToken).toUpperCase();
-    return getAllScopedRecords<DigitalCertificate>('certificates').find((certificate) =>
-      certificate.verificationToken.toUpperCase() === normalizedToken,
-    );
+    const keyStart = `${KEY_PREFIX}_certificates_v3_`;
+    // Public lookup only returns the certificate record to the projection
+    // service. It intentionally searches the isolated demo scope too, so a
+    // presenter can leave the demo workspace before opening its QR route.
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key?.startsWith(keyStart)) continue;
+      const match = readValue<DigitalCertificate[]>(key, []).find((certificate) =>
+        certificate.verificationToken?.toUpperCase() === normalizedToken,
+      );
+      if (match) return match;
+    }
+    return undefined;
+  },
+
+  updateCertificateStatus(certNo: string, status: DigitalCertificate['status']) {
+    if (!isDemoMode() || getCurrentUser().role !== 'admin') {
+      throw new Error('Only the Judge Demo administrator can change a demo certificate status.');
+    }
+    const certificate = this.getCertificateByNumber(certNo);
+    if (!certificate) throw new Error('Certificate not found.');
+    const application = getApplicationForUpdate(certificate.applicationId);
+    const certificates = getRecordsForUser<DigitalCertificate>('certificates', application.ownerId);
+    const index = certificates.findIndex((item) => item.certNo === certificate.certNo);
+    if (index < 0) throw new Error('Certificate record could not be updated.');
+    certificates[index] = { ...certificates[index], status };
+    setRecordsForUser('certificates', application.ownerId, certificates);
+    addAuditLog('DEMO_CERTIFICATE_STATUS_UPDATED', `${certificate.certNo}: ${status}`, certificate.certNo);
+    notifyListeners();
+    return certificates[index];
   },
 
   submitInspectionAndGenerateCertificate(appId: string, inspectionData: Omit<InspectionRecord, 'id' | 'submittedAt'>): { inspection: InspectionRecord; certificate?: DigitalCertificate } {
@@ -963,6 +1086,14 @@ export const StorageService = {
       return { inspection };
     }
 
+    const existingCertificate = getRecordsForUser<DigitalCertificate>('certificates', application.ownerId)
+      .find((certificate) => certificate.applicationId === application.id);
+    if (existingCertificate) {
+      if (application.status !== 'VERIFIED') saveWorkflowUpdate(appId, 'VERIFIED', 'INSPECTION_VERIFIED', inspectionData.observations);
+      notifyListeners();
+      return { inspection, certificate: existingCertificate };
+    }
+
     const profile = getStoredProfile(application.ownerId);
     const instruments = getRecordsForUser<Instrument>('instruments', application.ownerId);
     const instrumentIndex = instruments.findIndex((item) => item.id === application.instrumentId);
@@ -972,9 +1103,9 @@ export const StorageService = {
         .map((certificate) => certificate.verificationToken?.toUpperCase())
         .filter((token): token is string => Boolean(token)),
     );
-    const verificationToken = createVerificationToken(existingTokens);
+    const verificationToken = isDemoMode() ? 'ACCU-VER-DEMO-4821' : createVerificationToken(existingTokens);
     const certificate: DigitalCertificate = {
-      certNo: `ACCU-CERT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
+      certNo: isDemoMode() ? 'ACCU-DEMO-CERT-0001' : `ACCU-CERT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
       applicationId: application.id,
       instrumentId: application.instrumentId,
       ownerName: profile?.businessName || application.ownerName,
@@ -992,8 +1123,8 @@ export const StorageService = {
       verificationDate: todayISO(),
       validUntilDate: new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0],
       issuingOfficerName: inspectionData.officerName,
-      issuingOfficerDesignation: 'AccuMate reviewing role',
-      verificationAuthority: 'AccuMate prototype record',
+      issuingOfficerDesignation: isDemoMode() ? 'DEMO LMO / Field Officer' : 'AccuMate reviewing role',
+      verificationAuthority: 'AccuMate DEMO / PROTOTYPE record',
       securityHash: crypto.randomUUID().replaceAll('-', ''),
       qrCodeUrl: buildVerificationUrl(verificationToken),
       verificationToken,

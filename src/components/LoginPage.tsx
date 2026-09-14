@@ -20,7 +20,7 @@ import { Navbar } from './Navbar';
 
 interface LoginPageProps {
   onLoginSuccess: (role: UserRole, identity: { email: string; mobile: string }) => void | Promise<void>;
-  onLoadDemoWorkspace: () => void;
+  onEnterJudgeDemo: () => void;
   onOpenPublicVerify: () => void;
 }
 
@@ -36,7 +36,7 @@ const roles: Array<{
   { value: 'admin', label: 'Department admin', detail: 'Oversee the service', icon: Users },
 ];
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onLoadDemoWorkspace, onOpenPublicVerify }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJudgeDemo, onOpenPublicVerify }) => {
   const [authMethod, setAuthMethod] = useState<'PASSWORD' | 'OTP'>('PASSWORD');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -332,7 +332,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onLoadDemo
             </form>
 
             <div className="mt-6 border-t border-slate-100 pt-5 text-center text-xs leading-5 text-slate-500">
-              Want to explore sample records? <button type="button" onClick={onLoadDemoWorkspace} className="font-semibold text-indigo-700 hover:text-indigo-900">Load Demo Workspace</button>
+              Presenting to judges? <button type="button" onClick={onEnterJudgeDemo} className="font-semibold text-indigo-700 hover:text-indigo-900">Enter Judge Demo</button><span className="mx-1">·</span><span>safe DEMO / PROTOTYPE accounts only</span>
             </div>
           </div>
         </section>

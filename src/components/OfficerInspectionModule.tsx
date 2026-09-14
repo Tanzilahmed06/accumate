@@ -25,6 +25,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
   onBack,
   onSuccess,
 }) => {
+  const isJudgeDemo = StorageService.isDemoMode();
   const rules = CATEGORY_TOLERANCE_RULES[application.category] || CATEGORY_TOLERANCE_RULES['Weighing Scale'];
 
   const [testReadings, setTestReadings] = useState<TestReading[]>(() =>
@@ -32,7 +33,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
   );
 
   const [observations, setObservations] = useState(
-    'Prototype inspection observation. Confirm applicable official requirements outside this demonstration.'
+    isJudgeDemo ? 'Demo inspection completed successfully.' : 'Prototype inspection observation. Confirm applicable official requirements outside this demonstration.'
   );
   const [geoTagged, setGeoTagged] = useState('28.6139° N, 77.2090° E (Accuracy: ±2.5m)');
   const [photoCaptured, setPhotoCaptured] = useState(true);
@@ -71,7 +72,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
         officerName: officer.name,
         inspectionDate: new Date().toISOString().split('T')[0],
         locationGeo: geoTagged,
-        locationAddress: instrument?.locationAddress || 'Okhla Industrial Area, Delhi',
+        locationAddress: instrument?.locationAddress || 'Peenya, Bengaluru, Karnataka',
         checklist: [
           { id: 'instrument-identification', label: 'Demo identification review completed', checked: true },
           { id: 'document-reference', label: 'Demo application reference reviewed', checked: true },
@@ -329,7 +330,7 @@ export const OfficerInspectionModule: React.FC<OfficerInspectionModuleProps> = (
                   <Award className="w-4 h-4 text-amber-300" />
                   <span>
                     {finalDecision === 'PASS'
-                      ? 'Submit Prototype Inspection'
+                      ? (isJudgeDemo ? 'Pass Demo Inspection & Generate Certificate' : 'Submit Prototype Inspection')
                       : 'Submit Prototype Result'}
                   </span>
                 </>

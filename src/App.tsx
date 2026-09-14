@@ -31,6 +31,7 @@ import { PublicPortal } from './components/PublicPortal';
 import { SplashLoader } from './components/SplashLoader';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { BusinessProfile as BusinessProfilePage } from './components/BusinessProfile';
+import { JudgeDemoBar } from './components/JudgeDemoBar';
 import { buildVerificationPath, isVerificationRoute, verificationTokenFromPath } from './services/verificationUrl';
 
 function verificationTokenFromLocation() {
@@ -112,9 +113,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleHistoryNavigation);
   }, []);
 
-  // Handle Role Change
-  const handleRoleChange = (newRole: UserRole) => {
-    StorageService.setCurrentRole(newRole);
+  const openRoleWorkspace = (newRole: UserRole) => {
     setCurrentRole(newRole);
 
     // Set default tab per role
@@ -128,6 +127,22 @@ export default function App() {
     setActiveInspectionApp(null);
   };
 
+  // Normal accounts retain the existing sign-in behaviour. Judge Demo role
+  // switching uses dedicated demo identities instead of mutating this account.
+  const handleRoleChange = (newRole: UserRole) => {
+    StorageService.setCurrentRole(newRole);
+    openRoleWorkspace(newRole);
+  };
+
+  const handleDemoRoleChange = (newRole: Exclude<UserRole, 'public'>) => {
+    const demoUser = StorageService.enterDemoRole(newRole);
+    setCurrentUser(demoUser);
+    openRoleWorkspace(newRole);
+    setShowOnboarding(false);
+    setIsAuthenticated(true);
+    refreshData();
+  };
+
   // Handle Login Success
   const handleLoginSuccess = async (role: UserRole, identity: { email: string; mobile: string }) => {
     const user = StorageService.authenticateUser({ role, ...identity });
@@ -138,12 +153,18 @@ export default function App() {
     refreshData();
   };
 
-  const handleLoadDemoWorkspace = () => {
-    const demoUser = StorageService.loadDemoWorkspace();
+  const handleEnterJudgeDemo = () => handleDemoRoleChange('trader');
+
+  const handleResetJudgeDemo = () => {
+    const demoUser = StorageService.resetJudgeDemo();
     setCurrentUser(demoUser);
-    handleRoleChange('trader');
+    openRoleWorkspace('trader');
     setShowOnboarding(false);
-    setIsAuthenticated(true);
+    setIsRegisterModalOpen(false);
+    setIsApplyWizardOpen(false);
+    setViewingCertificate(null);
+    setIsCertModalOpen(false);
+    refreshData();
   };
 
   // Handle Logout
@@ -205,7 +226,7 @@ export default function App() {
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
-        onLoadDemoWorkspace={handleLoadDemoWorkspace}
+        onEnterJudgeDemo={handleEnterJudgeDemo}
         onOpenPublicVerify={() => handleOpenPublicVerify()}
       />
     );
@@ -240,10 +261,20 @@ export default function App() {
         expiryCount={expiryAlerts.length}
       />
 
-      {isDemoMode && (
-        <div className="border-y border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-bold tracking-[0.12em] text-amber-800">
-          DEMO MODE
-        </div>
+      {isDemoMode && currentRole !== 'public' && (
+        <JudgeDemoBar
+          role={currentRole}
+          instruments={instruments}
+          applications={applications}
+          certificates={certificates}
+          onRoleChange={handleDemoRoleChange}
+          onReset={handleResetJudgeDemo}
+          onOpenRegisterInstrument={() => setIsRegisterModalOpen(true)}
+          onStartInspection={(application) => setActiveInspectionApp(application)}
+          onViewCertificate={handleViewCertificate}
+          onOpenPublicVerification={handleOpenPublicVerify}
+          onRefresh={refreshData}
+        />
       )}
 
       {/* Main Layout Container */}
@@ -336,11 +367,11 @@ export default function App() {
       </div>
 
       {/* ALL MODALS & DRAWERS */}
-      <RegisterInstrumentModal
+      {isRegisterModalOpen && <RegisterInstrumentModal
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
         onSuccess={refreshData}
-      />
+      />}
 
       <ApplyVerificationWizard
         isOpen={isApplyWizardOpen}

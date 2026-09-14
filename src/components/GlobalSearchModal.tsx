@@ -21,9 +21,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   onViewCertificate,
   onViewApplication,
 }) => {
-  if (!isOpen) return null;
-
   const [query, setQuery] = useState('');
+
+  if (!isOpen) return null;
 
   const matchingApps = query.trim()
     ? applications.filter(

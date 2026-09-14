@@ -30,8 +30,6 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
   initialInstrumentId,
   onSuccess,
 }) => {
-  if (!isOpen) return null;
-
   const [step, setStep] = useState<number>(1);
   const [selectedInstId, setSelectedInstId] = useState<string>(
     initialInstrumentId || (instruments.length > 0 ? instruments[0].id : '')
@@ -43,6 +41,8 @@ export const ApplyVerificationWizard: React.FC<ApplyVerificationWizardProps> = (
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedAppNo, setCompletedAppNo] = useState('');
   const [copied, setCopied] = useState(false);
+
+  if (!isOpen) return null;
 
   const selectedInst = instruments.find((i) => i.id === selectedInstId);
 

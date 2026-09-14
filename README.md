@@ -1,32 +1,33 @@
-# React + TypeScript + Vite
+# AccuMate prototype
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+AccuMate is a prototype workflow for instrument verification records. It is not a Government certificate system.
 
-Currently, two official plugins are available:
+## Judge Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+At sign-in choose **Enter Judge Demo**. This opens a separate, resettable DEMO / PROTOTYPE workspace with no password entry and four role identities:
 
-## React Compiler
+- Business: Amaan Measurement Solutions / Arman Khan (`ACCU-T-KA-4821`)
+- LMO: Demo Legal Metrology Officer (`DEMO-LMO-001`)
+- GATC: Demo Government Approved Test Centre (`DEMO-GATC-001`)
+- Admin: AccuMate Demo Administrator (`DEMO-ADMIN-001`)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The business starts with a pre-filled Electronic Weighing Scale form. The role strip performs the shared workflow using the demo data store: submit application, review, schedule, start inspection, pass inspection, generate the certificate, and update certificate status. **Reset Demo** affects only the isolated demo storage keys.
 
-## Expanding the Oxlint configuration
+The generated certificate QR encodes:
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+`{VITE_PUBLIC_APP_URL}/verify/{verificationToken}`
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Set `VITE_PUBLIC_APP_URL` to the deployed origin, for example `https://accumate.vercel.app`; never use a localhost value for issued QR codes.
+
+## Public verification deployment
+
+`/verify/:verificationToken` is public and read-only. For cross-device/deployed lookups, configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, apply the Supabase migration, and use a backend mutation to persist issued certificates to the existing `certificates` table. The included public RPC deliberately returns only verification-safe fields.
+
+The current frontend prototype stores workflow writes in browser local storage; it does not include a configured Supabase write client or server credentials. The demo remains fully stateful within that browser, but a second device will not have its local demo records until that backend write integration is supplied. See `.env.example`.
+
+## Commands
+
+```bash
+npm.cmd run build
+npm.cmd run lint
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.

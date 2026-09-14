@@ -79,7 +79,7 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialVerif
             <BrandLogo />
             <div>
               <h1 className="text-lg font-bold text-[#17324D]">AccuMate Certificate Verification</h1>
-              <p className="text-xs text-slate-500">Prototype verification service</p>
+              <p className="text-xs text-slate-500">DEMO / PROTOTYPE verification service</p>
             </div>
           </div>
           <button onClick={onBackToApp} className="inline-flex items-center gap-1.5 border border-[#1558A6] px-3 py-2 text-xs font-semibold text-[#1558A6] transition hover:bg-[#EAF3FB]">
@@ -137,7 +137,7 @@ const CertificateResult: React.FC<{ certificate: PublicCertificate }> = ({ certi
   const isValid = status === 'VALID';
   const isExpired = status === 'EXPIRED';
   const statusClass = isValid ? 'border-green-200 bg-green-50 text-[#1f6d3b]' : isExpired ? 'border-amber-200 bg-amber-50 text-[#8a5a00]' : 'border-red-200 bg-red-50 text-[#9e2d2d]';
-  const statusMessage = isValid ? 'Certificate Valid' : isExpired ? 'Certificate Expired' : 'Certificate Revoked';
+  const statusMessage = isValid ? 'CERTIFICATE VALID' : isExpired ? 'CERTIFICATE EXPIRED' : 'CERTIFICATE REVOKED';
 
   return (
     <section className="overflow-hidden border border-slate-200 bg-white shadow-sm">
@@ -149,8 +149,8 @@ const CertificateResult: React.FC<{ certificate: PublicCertificate }> = ({ certi
         <div className={`flex gap-3 border p-4 ${statusClass}`}>
           {isValid ? <CheckCircle2 className="mt-0.5 size-5 shrink-0" /> : <AlertTriangle className="mt-0.5 size-5 shrink-0" />}
           <div>
-            <div className="text-sm font-bold">{statusMessage} · {isValid ? '✓' : '✕'} {status}</div>
-            <p className="mt-1 text-xs leading-5">Verified against the AccuMate certificate record. This is not a Government verification result.</p>
+            <div className="text-sm font-bold">{isValid ? '✓' : '⚠'} {statusMessage}</div>
+            <p className="mt-1 text-xs leading-5">Verified through AccuMate. This is a DEMO / PROTOTYPE record, not a Government verification result.</p>
           </div>
         </div>
         <dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
