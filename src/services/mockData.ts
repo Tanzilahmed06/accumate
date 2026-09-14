@@ -269,7 +269,8 @@ export const INITIAL_CERTIFICATES: DigitalCertificate[] = [
     issuingOfficerDesignation: 'Prototype Issuing Role',
     verificationAuthority: 'AccuMate prototype record',
     securityHash: '8f9b4c1a2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a',
-    qrCodeUrl: 'https://accumate.example/verify?cert=DEMO-CERT-2026-001',
+    verificationToken: 'ACCU-VER-8F72K9M4A1B2C3D4',
+    qrCodeUrl: '',
     status: 'VALID',
   },
   {
@@ -291,7 +292,8 @@ export const INITIAL_CERTIFICATES: DigitalCertificate[] = [
     issuingOfficerDesignation: 'Prototype Issuing Role',
     verificationAuthority: 'AccuMate prototype record',
     securityHash: '3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b',
-    qrCodeUrl: 'https://accumate.example/verify?cert=DEMO-CERT-2025-002',
+    verificationToken: 'ACCU-VER-6D4E2F8A9B1C3E5F',
+    qrCodeUrl: '',
     status: 'VALID',
   },
   {
@@ -313,7 +315,8 @@ export const INITIAL_CERTIFICATES: DigitalCertificate[] = [
     issuingOfficerDesignation: 'Prototype Test Centre Role',
     verificationAuthority: 'AccuMate prototype record',
     securityHash: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
-    qrCodeUrl: 'https://accumate.example/verify?cert=DEMO-CERT-2024-003',
+    verificationToken: 'ACCU-VER-1C5E7A9D2F4B6E8C',
+    qrCodeUrl: '',
     status: 'EXPIRED',
   },
 ];

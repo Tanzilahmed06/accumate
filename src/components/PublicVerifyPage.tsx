@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, CheckCircle2, QrCode, Search, Upload, XCircle } from 'lucide-react';
-import type { DigitalCertificate } from '../types';
-import { StorageService } from '../services/storageService';
+import { findPublicCertificate, type PublicCertificate } from '../services/publicVerificationService';
 import { BrandLogo } from './BrandLogo';
 
 interface PublicVerifyPageProps {
-  initialCertNo?: string;
+  initialVerificationToken?: string;
   onBackToApp: () => void;
 }
 
@@ -19,30 +18,28 @@ interface QrDetectorConstructor {
 
 type ScannerWindow = Window & typeof globalThis & { BarcodeDetector?: QrDetectorConstructor };
 
-export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertNo, onBackToApp }) => {
-  const [query, setQuery] = useState(initialCertNo || '');
-  const [certificate, setCertificate] = useState<DigitalCertificate | undefined>(() => (
-    initialCertNo ? StorageService.getCertificateByNumber(initialCertNo) : undefined
-  ));
-  const [searched, setSearched] = useState(Boolean(initialCertNo));
+export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialVerificationToken, onBackToApp }) => {
+  const [query, setQuery] = useState(initialVerificationToken || '');
+  const [certificate, setCertificate] = useState<PublicCertificate | undefined>();
+  const [searched, setSearched] = useState(Boolean(initialVerificationToken));
   const [scanMessage, setScanMessage] = useState('');
   const imageInput = useRef<HTMLInputElement>(null);
 
-  const verifyReference = (reference: string) => {
-    setCertificate(StorageService.getCertificateByNumber(reference));
+  const verifyReference = async (reference: string, tokenOnly = false) => {
+    setCertificate(await findPublicCertificate(reference, tokenOnly));
     setSearched(true);
   };
 
   useEffect(() => {
-    if (!initialCertNo) return;
-    setQuery(initialCertNo);
-    verifyReference(initialCertNo);
-  }, [initialCertNo]);
+    if (!initialVerificationToken) return;
+    setQuery(initialVerificationToken);
+    void verifyReference(initialVerificationToken, true);
+  }, [initialVerificationToken]);
 
   const verify = (event: React.FormEvent) => {
     event.preventDefault();
     setScanMessage('');
-    verifyReference(query);
+    void verifyReference(query);
   };
 
   const scanQrImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +63,7 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertN
       }
       setQuery(scannedValue);
       setScanMessage('QR code scanned. Checking the AccuMate record…');
-      verifyReference(scannedValue);
+      void verifyReference(scannedValue, /^https?:\/\/[^/]+\/verify\//i.test(scannedValue));
     } catch {
       setScanMessage('Unable to read that QR image. You can still enter the certificate number manually.');
     } finally {
@@ -103,10 +100,10 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertN
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">Scan a certificate QR code or enter its number. The QR contains only a verification reference and is checked against the AccuMate certificate record.</p>
           </div>
           <form onSubmit={verify} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
-            <label className="sr-only" htmlFor="certificate-query">Certificate number or verification URL</label>
+            <label className="sr-only" htmlFor="certificate-query">Verification token or verification URL</label>
             <div className="relative min-w-0 flex-1">
               <Search className="absolute left-3 top-3 size-4 text-slate-400" />
-              <input id="certificate-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Certificate number or QR verification URL" className="w-full border border-slate-300 py-2.5 pl-9 pr-3 font-mono text-sm text-[#17324D] outline-none focus:border-[#1558A6] focus:ring-2 focus:ring-[#1558A6]/20" />
+              <input id="certificate-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Verification token or QR verification URL" className="w-full border border-slate-300 py-2.5 pl-9 pr-3 font-mono text-sm text-[#17324D] outline-none focus:border-[#1558A6] focus:ring-2 focus:ring-[#1558A6]/20" />
             </div>
             <button className="bg-[#1558A6] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#104986]">Verify Certificate</button>
           </form>
@@ -129,18 +126,18 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({ initialCertN
 const CertificateNotFound: React.FC = () => (
   <section className="border border-dashed border-slate-300 bg-white px-5 py-12 text-center">
     <XCircle className="mx-auto size-8 text-[#C93636]" />
-    <h2 className="mt-3 text-lg font-bold text-[#17324D]">CERTIFICATE NOT FOUND</h2>
-    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">No matching AccuMate certificate record was found. Check the certificate number or scan the QR code again.</p>
+    <h2 className="mt-3 text-lg font-bold text-[#17324D]">Certificate Not Found</h2>
+    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">This QR code does not correspond to a valid AccuMate certificate.</p>
   </section>
 );
 
-const CertificateResult: React.FC<{ certificate: DigitalCertificate }> = ({ certificate }) => {
+const CertificateResult: React.FC<{ certificate: PublicCertificate }> = ({ certificate }) => {
   const dateExpired = new Date(`${certificate.validUntilDate}T23:59:59`).getTime() < Date.now();
-  const status = certificate.status === 'VALID' && !dateExpired ? 'VERIFIED' : certificate.status === 'REVOKED' ? 'FAILED' : 'EXPIRED';
-  const isValid = status === 'VERIFIED';
+  const status = certificate.status === 'REVOKED' ? 'REVOKED' : certificate.status === 'EXPIRED' || dateExpired ? 'EXPIRED' : 'VALID';
+  const isValid = status === 'VALID';
   const isExpired = status === 'EXPIRED';
   const statusClass = isValid ? 'border-green-200 bg-green-50 text-[#1f6d3b]' : isExpired ? 'border-amber-200 bg-amber-50 text-[#8a5a00]' : 'border-red-200 bg-red-50 text-[#9e2d2d]';
-  const statusMessage = isValid ? 'INSTRUMENT VERIFIED' : isExpired ? 'VERIFICATION EXPIRED' : 'VERIFICATION FAILED';
+  const statusMessage = isValid ? 'Certificate Valid' : isExpired ? 'Certificate Expired' : 'Certificate Revoked';
 
   return (
     <section className="overflow-hidden border border-slate-200 bg-white shadow-sm">
@@ -152,21 +149,18 @@ const CertificateResult: React.FC<{ certificate: DigitalCertificate }> = ({ cert
         <div className={`flex gap-3 border p-4 ${statusClass}`}>
           {isValid ? <CheckCircle2 className="mt-0.5 size-5 shrink-0" /> : <AlertTriangle className="mt-0.5 size-5 shrink-0" />}
           <div>
-            <div className="text-sm font-bold">{statusMessage}</div>
+            <div className="text-sm font-bold">{statusMessage} · {isValid ? '✓' : '✕'} {status}</div>
             <p className="mt-1 text-xs leading-5">Verified against the AccuMate certificate record. This is not a Government verification result.</p>
           </div>
         </div>
         <dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
           <Detail label="Certificate Number" value={certificate.certNo} mono />
-          <Detail label="Instrument Name" value={certificate.instrumentName || certificate.instrumentCategory} />
-          <Detail label="Instrument Category" value={certificate.instrumentCategory} />
+          <Detail label="Instrument Type" value={certificate.instrumentType} />
           <Detail label="Manufacturer" value={certificate.manufacturer} />
           <Detail label="Model" value={certificate.modelNumber} />
           <Detail label="Serial Number" value={certificate.serialNumber} mono />
-          <Detail label="Capacity" value={certificate.capacity} />
-          <Detail label="Business Name" value={certificate.businessName || certificate.ownerName} />
-          <Detail label="Verification Status" value={status} />
-          <Detail label="Certificate Issue Date" value={certificate.verificationDate} />
+          <Detail label="Business / Trader Name" value={certificate.businessName} />
+          <Detail label="Current Status" value={status} />
           <Detail label="Valid Until" value={certificate.validUntilDate} />
           <Detail label="Verification Date" value={certificate.verificationDate} />
         </dl>

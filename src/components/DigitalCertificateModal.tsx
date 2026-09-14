@@ -1,13 +1,13 @@
-import React from 'react';
-import { X, Printer, QrCode, ShieldCheck, CheckCircle2, Award, Lock } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import React, { useRef } from 'react';
+import { X, Printer, QrCode, ShieldCheck, CheckCircle2, Award, Lock, Download } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import type { DigitalCertificate } from '../types';
 
 interface DigitalCertificateModalProps {
   isOpen: boolean;
   onClose: () => void;
   certificate: DigitalCertificate;
-  onVerifyQR: (certNo: string) => void;
+  onVerifyQR: (verificationToken: string) => void;
 }
 
 export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = ({
@@ -16,13 +16,23 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
   certificate,
   onVerifyQR,
 }) => {
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   if (!isOpen) return null;
 
-  const verificationReference = certificate.verificationToken || certificate.certNo;
-  const verificationUrl = `${window.location.origin}/verify-certificate?id=${encodeURIComponent(verificationReference)}`;
+  const verificationReference = certificate.verificationToken;
+  const verificationUrl = certificate.qrCodeUrl;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadQr = () => {
+    const canvas = qrCanvasRef.current;
+    if (!canvas) return;
+    const downloadLink = document.createElement('a');
+    downloadLink.href = canvas.toDataURL('image/png');
+    downloadLink.download = `AccuMate-Certificate-${certificate.certNo}-QR.png`;
+    downloadLink.click();
   };
 
   return (
@@ -161,9 +171,11 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
               {/* Dynamic QR Code */}
               <div className="flex flex-col items-center justify-center border-t border-slate-200 pt-5 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
                 <div className="border-2 border-slate-900 bg-white p-3">
-                  <QRCodeSVG
+                  <QRCodeCanvas
+                    ref={qrCanvasRef}
                     value={verificationUrl}
-                    size={144}
+                    size={512}
+                    className="h-36 w-36"
                     level="H"
                     bgColor="#FFFFFF"
                     fgColor="#0F172A"
@@ -172,8 +184,16 @@ export const DigitalCertificateModal: React.FC<DigitalCertificateModalProps> = (
                   />
                 </div>
                 <div className="mt-3 text-center text-[10px] font-semibold text-slate-700">Scan to verify this certificate</div>
-                <div className="mt-1 text-center text-[9px] font-mono text-slate-500">Ref: {certificate.certNo}</div>
+                <div className="mt-1 text-center text-[9px] font-mono text-slate-500">Ref: {verificationReference}</div>
+                <button onClick={handleDownloadQr} className="no-print mt-3 inline-flex items-center gap-1.5 border border-[#1558A6] px-2.5 py-1.5 text-[10px] font-bold text-[#1558A6] hover:bg-[#EAF3FB]">
+                  <Download className="size-3" />Download QR
+                </button>
               </div>
+            </div>
+
+            <div className="no-print border border-slate-200 bg-slate-50 px-4 py-3 text-xs">
+              <div className="font-bold uppercase tracking-[0.08em] text-slate-500">Verification URL</div>
+              <a href={verificationUrl} target="_blank" rel="noreferrer" className="mt-1 block break-all font-mono text-[#1558A6] hover:underline">{verificationUrl}</a>
             </div>
 
             {/* Signatures & Security Hash */}

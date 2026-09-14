@@ -22,6 +22,7 @@ import {
   INITIAL_INSPECTIONS,
   INITIAL_INSTRUMENTS,
 } from './mockData';
+import { buildVerificationPath, buildVerificationUrl, extractVerificationToken, isStaleLegacyVerificationUrl } from './verificationUrl';
 
 const KEY_PREFIX = 'accumate';
 const STORAGE_VERSION_KEY = `${KEY_PREFIX}_storage_version`;
@@ -182,6 +183,64 @@ function getAllScopedRecords<T extends ScopedRecord>(collection: string): T[] {
   }
 
   return records;
+}
+
+function createVerificationToken(usedTokens: Set<string>) {
+  let token = '';
+  do {
+    token = `ACCU-VER-${crypto.randomUUID().replaceAll('-', '').slice(0, 16).toUpperCase()}`;
+  } while (usedTokens.has(token));
+  return token;
+}
+
+function hasPermanentVerificationUrl(value: string | undefined, verificationToken: string) {
+  if (!value) return false;
+  try {
+    return new URL(value).pathname === buildVerificationPath(verificationToken);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * One-time compatibility migration for certificate records created before
+ * verification tokens existed. It only writes records that are missing a
+ * token or still contain the former query-string QR URL.
+ */
+function ensureCertificateVerificationData() {
+  const keyStart = `${KEY_PREFIX}_certificates_v3_`;
+  const certificateKeys: string[] = [];
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(keyStart)) certificateKeys.push(key);
+  }
+
+  const usedTokens = new Set<string>();
+  for (const key of certificateKeys) {
+    const certificates = readValue<DigitalCertificate[]>(key, []);
+    let changed = false;
+    const migrated = certificates.map((certificate) => {
+      const existingToken = certificate.verificationToken?.trim().toUpperCase();
+      const verificationToken = existingToken && !usedTokens.has(existingToken)
+        ? existingToken
+        : createVerificationToken(usedTokens);
+      usedTokens.add(verificationToken);
+
+      const qrCodeUrl = hasPermanentVerificationUrl(certificate.qrCodeUrl, verificationToken)
+        && !isStaleLegacyVerificationUrl(certificate.qrCodeUrl)
+        ? certificate.qrCodeUrl
+        : buildVerificationUrl(verificationToken);
+
+      if (certificate.verificationToken !== verificationToken || certificate.qrCodeUrl !== qrCodeUrl) {
+        changed = true;
+        return { ...certificate, verificationToken, qrCodeUrl };
+      }
+      return certificate;
+    });
+
+    if (changed) writeValue(key, migrated);
+  }
 }
 
 function getCurrentRole(): UserRole {
@@ -400,16 +459,6 @@ function getAnalyticsStats(): AnalyticsStats {
   };
 }
 
-function parseVerificationReference(value: string) {
-  const trimmed = value.trim();
-  try {
-    const url = new URL(trimmed, 'https://verification.accumate.local');
-    return url.searchParams.get('id') || url.searchParams.get('cert') || trimmed;
-  } catch {
-    return trimmed;
-  }
-}
-
 const statusLabels: Record<ApplicationStatus, string> = {
   DRAFT: 'Draft',
   SUBMITTED: 'Submitted',
@@ -618,6 +667,7 @@ export const StorageService = {
     if (!localStorage.getItem(scopedKey('certificates', demoUserId))) writeValue(scopedKey('certificates', demoUserId), INITIAL_CERTIFICATES);
     if (!localStorage.getItem(scopedKey('inspections', demoUserId))) writeValue(scopedKey('inspections', demoUserId), INITIAL_INSPECTIONS);
     if (!localStorage.getItem(scopedKey('audit_logs', demoUserId))) writeValue(scopedKey('audit_logs', demoUserId), INITIAL_AUDIT_LOGS);
+    ensureCertificateVerificationData();
 
     const merchants = getMerchants();
     if (!merchants[demoProfile.merchantId]) {
@@ -720,7 +770,7 @@ export const StorageService = {
   getApplications,
 
   getApplicationByNo(query: string) {
-    const normalizedQuery = parseVerificationReference(query).toUpperCase();
+    const normalizedQuery = extractVerificationToken(query).toUpperCase();
     return getAllScopedRecords<VerificationApplication>('applications').find((application) =>
       [application.applicationNo, application.id].some((value) => value.toUpperCase() === normalizedQuery),
     );
@@ -873,14 +923,26 @@ export const StorageService = {
     return saveWorkflowUpdate(appId, 'COMPLETED', 'APPLICATION_COMPLETED', remarks || 'Verification workflow completed.');
   },
 
-  getCertificates,
+  getCertificates() {
+    ensureCertificateVerificationData();
+    return getCertificates();
+  },
 
   getCertificateByNumber(query: string) {
-    const normalizedQuery = parseVerificationReference(query).toUpperCase();
+    ensureCertificateVerificationData();
+    const normalizedQuery = extractVerificationToken(query).toUpperCase();
     return getAllScopedRecords<DigitalCertificate>('certificates').find((certificate) =>
       [certificate.certNo, certificate.verificationToken, certificate.applicationId, certificate.instrumentId]
         .filter((value): value is string => Boolean(value))
         .some((value) => value.toUpperCase() === normalizedQuery),
+    );
+  },
+
+  getPublicCertificateByVerificationToken(verificationToken: string) {
+    ensureCertificateVerificationData();
+    const normalizedToken = extractVerificationToken(verificationToken).toUpperCase();
+    return getAllScopedRecords<DigitalCertificate>('certificates').find((certificate) =>
+      certificate.verificationToken.toUpperCase() === normalizedToken,
     );
   },
 
@@ -905,7 +967,12 @@ export const StorageService = {
     const instruments = getRecordsForUser<Instrument>('instruments', application.ownerId);
     const instrumentIndex = instruments.findIndex((item) => item.id === application.instrumentId);
     const instrument = instruments[instrumentIndex];
-    const verificationToken = crypto.randomUUID();
+    const existingTokens = new Set(
+      getAllScopedRecords<DigitalCertificate>('certificates')
+        .map((certificate) => certificate.verificationToken?.toUpperCase())
+        .filter((token): token is string => Boolean(token)),
+    );
+    const verificationToken = createVerificationToken(existingTokens);
     const certificate: DigitalCertificate = {
       certNo: `ACCU-CERT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
       applicationId: application.id,
@@ -928,7 +995,7 @@ export const StorageService = {
       issuingOfficerDesignation: 'AccuMate reviewing role',
       verificationAuthority: 'AccuMate prototype record',
       securityHash: crypto.randomUUID().replaceAll('-', ''),
-      qrCodeUrl: `/verify-certificate?id=${encodeURIComponent(verificationToken)}`,
+      qrCodeUrl: buildVerificationUrl(verificationToken),
       verificationToken,
       status: 'VALID',
     };

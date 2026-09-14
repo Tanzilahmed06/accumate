@@ -255,8 +255,8 @@ export interface DigitalCertificate {
   issuingOfficerDesignation: string;
   verificationAuthority: string;
   securityHash: string; // SHA-256 Mock hash
-  qrCodeUrl: string;
-  verificationToken?: string;
+  qrCodeUrl: string; // Permanent public /verify/{verificationToken} URL
+  verificationToken: string;
   status: 'VALID' | 'EXPIRED' | 'REVOKED';
 }
 

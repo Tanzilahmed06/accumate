@@ -31,6 +31,13 @@ import { PublicPortal } from './components/PublicPortal';
 import { SplashLoader } from './components/SplashLoader';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { BusinessProfile as BusinessProfilePage } from './components/BusinessProfile';
+import { buildVerificationPath, isVerificationRoute, verificationTokenFromPath } from './services/verificationUrl';
+
+function verificationTokenFromLocation() {
+  return verificationTokenFromPath(window.location.pathname)
+    || new URLSearchParams(window.location.search).get('id')
+    || undefined;
+}
 
 export default function App() {
   const [isSplashComplete, setIsSplashComplete] = useState(false);
@@ -39,7 +46,7 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<UserRole>(() => StorageService.getCurrentRole());
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isPublicRoute, setIsPublicRoute] = useState(true);
-  const [isPublicVerifyRoute, setIsPublicVerifyRoute] = useState(() => window.location.pathname === '/verify-certificate');
+  const [isPublicVerifyRoute, setIsPublicVerifyRoute] = useState(() => isVerificationRoute(window.location.pathname));
 
   // App data state synced with StorageService
   const [currentUser, setCurrentUser] = useState<User>(() => StorageService.getCurrentUser());
@@ -67,7 +74,7 @@ export default function App() {
   const [viewingTimelineApp, setViewingTimelineApp] = useState<VerificationApplication | null>(null);
   const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [publicSearchCertNo, setPublicSearchCertNo] = useState<string | undefined>(() => new URLSearchParams(window.location.search).get('id') || undefined);
+  const [publicVerificationToken, setPublicVerificationToken] = useState<string | undefined>(verificationTokenFromLocation);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Sync data whenever StorageService triggers a change
@@ -92,6 +99,17 @@ export default function App() {
       refreshData();
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleHistoryNavigation = () => {
+      const isVerifyRoute = isVerificationRoute(window.location.pathname);
+      setIsPublicVerifyRoute(isVerifyRoute);
+      setPublicVerificationToken(verificationTokenFromLocation());
+      if (isVerifyRoute) setIsPublicRoute(false);
+    };
+    window.addEventListener('popstate', handleHistoryNavigation);
+    return () => window.removeEventListener('popstate', handleHistoryNavigation);
   }, []);
 
   // Handle Role Change
@@ -145,10 +163,12 @@ export default function App() {
   };
 
   // Open Public QR Verification Page
-  const handleOpenPublicVerify = (certNo?: string) => {
-    const verificationPath = certNo ? `/verify-certificate?id=${encodeURIComponent(certNo)}` : '/verify-certificate';
+  const handleOpenPublicVerify = (reference?: string) => {
+    const certificate = reference ? StorageService.getCertificateByNumber(reference) : undefined;
+    const verificationToken = certificate?.verificationToken || reference;
+    const verificationPath = verificationToken ? buildVerificationPath(verificationToken) : '/verify';
     window.history.pushState({}, '', verificationPath);
-    setPublicSearchCertNo(certNo);
+    setPublicVerificationToken(verificationToken);
     setIsPublicRoute(false);
     setIsPublicVerifyRoute(true);
     setIsCertModalOpen(false);
@@ -161,7 +181,7 @@ export default function App() {
   if (isPublicVerifyRoute) {
     return (
       <PublicVerifyPage
-        initialCertNo={publicSearchCertNo}
+        initialVerificationToken={publicVerificationToken}
         onBackToApp={() => {
           window.history.pushState({}, '', '/');
           setIsPublicVerifyRoute(false);
