@@ -128,37 +128,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
         </div>
       </Navbar>
 
-      <main className="mx-auto grid w-full max-w-7xl items-stretch gap-8 px-5 py-8 lg:min-h-[calc(100vh-137px)] lg:grid-cols-[1fr_480px] lg:gap-16 lg:px-8 lg:py-12">
-        <section className="relative flex flex-col justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 px-7 py-10 text-white shadow-xl shadow-slate-300/40 sm:px-10 lg:py-14">
+      <main className="mx-auto grid w-full max-w-7xl items-stretch gap-6 px-4 py-6 sm:px-5 sm:py-8 lg:min-h-[calc(100vh-137px)] lg:grid-cols-[1fr_480px] lg:gap-16 lg:px-8 lg:py-12">
+        <section className="relative flex flex-col justify-center overflow-hidden rounded-[28px] bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 px-5 py-8 text-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:px-8 sm:py-10 lg:px-10 lg:py-14">
           <div className="absolute -left-16 -top-20 size-72 rounded-full bg-indigo-500/20 blur-3xl" />
           <div className="absolute -bottom-24 right-0 size-80 rounded-full bg-cyan-400/10 blur-3xl" />
           <div className="relative max-w-xl">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-indigo-100">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-medium text-indigo-100 sm:text-xs">
               <span className="size-1.5 rounded-full bg-emerald-400" />
               A simpler way to stay verified
             </div>
             <h1 className="font-heading text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
               Confidence in every measurement.
             </h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-indigo-100/85 sm:text-lg">
+            <p className="mt-4 max-w-lg text-sm leading-7 text-indigo-100/85 sm:text-base sm:text-lg">
               Apply for verification, follow inspections, and keep every certificate close at hand — all in one welcoming workspace.
             </p>
 
-            <div className="mt-10 grid gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
               {[
                 ['01', 'Apply online', 'Start in a few minutes'],
                 ['02', 'Track progress', 'See every next step'],
                 ['03', 'Stay certified', 'Receive timely reminders'],
               ].map(([number, title, detail]) => (
-                <div key={number} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4">
-                  <div className="text-xs font-bold tracking-wider text-cyan-300">{number}</div>
-                  <div className="mt-3 text-sm font-semibold text-white">{title}</div>
-                  <div className="mt-1 text-xs leading-5 text-indigo-200/75">{detail}</div>
+                <div key={number} className="rounded-2xl border border-white/10 bg-white/[0.07] p-3.5 sm:p-4">
+                  <div className="text-[10px] font-bold tracking-wider text-cyan-300 sm:text-xs">{number}</div>
+                  <div className="mt-2 text-sm font-semibold text-white">{title}</div>
+                  <div className="mt-1 text-[11px] leading-5 text-indigo-200/75 sm:text-xs">{detail}</div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-9 flex items-center gap-3 text-xs text-indigo-100/70">
+            <div className="mt-7 flex items-center gap-3 text-[11px] text-indigo-100/75 sm:text-xs">
               <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
               Your certificate can always be verified publicly by its QR code.
             </div>
@@ -166,14 +166,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
         </section>
 
         <section className="flex items-center">
-          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
-            <div className="mb-7">
+          <div className="w-full rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:p-6 lg:p-8">
+            <div className="mb-6">
               <p className="text-sm font-semibold text-indigo-700">Welcome back</p>
               <h2 className="font-heading mt-1 text-2xl font-bold tracking-tight text-slate-950">Sign in to your account</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">Choose your workspace and we’ll take you where you need to go.</p>
             </div>
 
-            <div className="mb-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold">
+            <div className="mb-5 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold">
               <button
                 type="button"
                 onClick={() => setAuthMethod('PASSWORD')}
@@ -190,7 +190,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
               </button>
             </div>
 
-            <form onSubmit={handleLoginSubmit} className="space-y-5">
+            <form onSubmit={handleLoginSubmit} className="space-y-4 sm:space-y-5">
               <fieldset>
                 <legend className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">I’m signing in as</legend>
                 <div className="grid grid-cols-2 gap-2">
@@ -236,7 +236,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
                     </span>
                   </label>
                   <label className="block">
-                    <span className="mb-1.5 flex items-center justify-between text-sm font-medium text-slate-700">
+                    <span className="mb-1.5 flex items-center justify-between gap-2 text-sm font-medium text-slate-700">
                       Password
                       <button type="button" className="text-xs font-semibold text-indigo-700 hover:text-indigo-900">Forgot password?</button>
                     </span>
@@ -265,7 +265,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
                 <>
                   <label className="block">
                     <span className="mb-1.5 block text-sm font-medium text-slate-700">Registered mobile number</span>
-                    <span className="flex gap-2">
+                    <span className="flex flex-col gap-2 sm:flex-row">
                       <span className="relative block min-w-0 flex-1">
                         <Smartphone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                         <input
@@ -276,7 +276,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
                           placeholder="10-digit mobile number"
                         />
                       </span>
-                      <button type="button" onClick={handleSendOtp} className="shrink-0 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100">
+                      <button type="button" onClick={handleSendOtp} className="shrink-0 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100">
                         {otpSent ? 'Resend' : 'Send OTP'}
                       </button>
                     </span>
@@ -301,11 +301,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onEnterJud
                   <label htmlFor="security-code" className="text-sm font-medium text-slate-700">Security check</label>
                   <span className="text-xs text-slate-500">Enter the characters shown</span>
                 </div>
-                <div className="flex gap-2">
-                  <div className="flex min-w-[132px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 font-mono text-sm font-bold tracking-[0.22em] text-indigo-700">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="flex min-h-[46px] min-w-[132px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 font-mono text-sm font-bold tracking-[0.22em] text-indigo-700">
                     {captchaCode}
                   </div>
-                  <button type="button" onClick={generateCaptcha} className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-300 text-slate-500 transition hover:bg-slate-50 hover:text-indigo-700" aria-label="Generate a new security code">
+                  <button type="button" onClick={generateCaptcha} className="grid size-[46px] shrink-0 place-items-center rounded-xl border border-slate-300 text-slate-500 transition hover:bg-slate-50 hover:text-indigo-700" aria-label="Generate a new security code">
                     <RefreshCw className="size-4" />
                   </button>
                   <input

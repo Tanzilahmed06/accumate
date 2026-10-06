@@ -278,7 +278,7 @@ export default function App() {
       )}
 
       {/* Main Layout Container */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      <div className="flex-1 flex w-full max-w-7xl mx-auto flex-col md:flex-row">
         {/* Sidebar */}
         <Sidebar
           activeRole={currentRole}
@@ -293,7 +293,7 @@ export default function App() {
         />
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-hidden">
+        <main className="flex-1 min-w-0 p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden">
           {/* TRADER ROLE VIEWS */}
           {currentRole === 'trader' && activeTab === 'business-profile' && (
             <BusinessProfilePage
