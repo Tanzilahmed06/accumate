@@ -62,29 +62,29 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden my-8 animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden my-6 sm:my-8 animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
+        <div className="bg-slate-900 px-4 py-3 text-white flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
               <Shield className="w-5 h-5 text-amber-400" />
             </div>
-            <div>
-              <h3 className="font-bold text-lg font-heading">{isJudgeDemo ? 'Add Pre-filled Demo Instrument' : 'Register Weighing / Measuring Instrument'}</h3>
-              <p className="text-xs text-slate-400">{isJudgeDemo ? 'DEMO / PROTOTYPE DATA is pre-filled for the judge presentation.' : 'Add the equipment details you want to manage in AccuMate.'}</p>
+            <div className="min-w-0">
+              <h3 className="font-bold text-base leading-snug sm:text-lg font-heading break-words">{isJudgeDemo ? 'Add Pre-filled Demo Instrument' : 'Register Weighing / Measuring Instrument'}</h3>
+              <p className="mt-1 text-[11px] leading-5 text-slate-400 sm:text-xs">{isJudgeDemo ? 'DEMO / PROTOTYPE DATA is pre-filled for the judge presentation.' : 'Add the equipment details you want to manage in AccuMate.'}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer self-end sm:self-auto"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-4 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar sm:p-6 sm:space-y-6">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
@@ -94,26 +94,26 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
 
           {/* Instrument Basic Info */}
           <div>
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">1. Technical Specifications</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-700 mb-1">Instrument Title / Name *</label>
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 sm:text-xs">1. Technical Specifications</h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Instrument Title / Name *</label>
                 <input
                   type="text"
                   placeholder="Enter an instrument name"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Instrument Category *</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Instrument Category *</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as InstrumentCategory)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
                 >
                   <option value="Weighing Scale">Weighing Scale</option>
                   <option value="Weighbridge">Weighbridge</option>
@@ -125,58 +125,58 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Serial Number *</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Serial Number *</label>
                 <input
                   type="text"
                   placeholder="Enter serial number"
                   value={serialNumber}
                   onChange={(e) => setSerialNumber(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Manufacturer *</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Manufacturer *</label>
                 <input
                   type="text"
                   placeholder="Enter manufacturer"
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Model Number</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Model Number</label>
                 <input
                   type="text"
                   placeholder="Enter model number"
                   value={modelNumber}
                   onChange={(e) => setModelNumber(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Maximum Capacity *</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Maximum Capacity *</label>
                 <input
                   type="text"
                   placeholder="Enter capacity or range"
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Accuracy Class / Grade</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Accuracy Class / Grade</label>
                 <select
                   value={accuracyClass}
                   onChange={(e) => setAccuracyClass(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
                 >
                   <option value="Class I (Special Accuracy)">Class I (Special Accuracy - Lab)</option>
                   <option value="Class II (High Accuracy)">Class II (High Accuracy - Jewelry/Gold)</option>
@@ -189,48 +189,48 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
           </div>
 
           {/* Location & Purchase info */}
-          <div>
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">2. Installation Site & Purchase Details</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div>
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 sm:text-xs">2. Installation Site & Purchase Details</h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="md:col-span-3">
-                <label className="block text-xs font-medium text-slate-700 mb-1">Physical Installation Address *</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Physical Installation Address *</label>
                 <input
                   type="text"
                   placeholder="Enter installation address"
                   value={locationAddress}
                   onChange={(e) => setLocationAddress(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">City</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">City</label>
                 <input
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">State / UT</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">State / UT</label>
                 <input
                   type="text"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Purchase Date</label>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1 sm:text-xs">Purchase Date</label>
                 <input
                   type="date"
                   value={purchaseDate}
                   onChange={(e) => setPurchaseDate(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -238,8 +238,8 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
 
           {/* Document Upload Simulation */}
           <div>
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">3. Verification Evidence & Photos</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 sm:text-xs">3. Verification Evidence & Photos</h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Photo Upload */}
               <div
                 onClick={() => setPhotoUploaded(!photoUploaded)}
@@ -271,17 +271,17 @@ export const RegisterInstrumentModal: React.FC<RegisterInstrumentModalProps> = (
           </div>
 
           {/* Footer Action Buttons */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-slate-200 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="w-full px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+              className="w-full px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 sm:w-auto"
             >
               <CheckCircle className="w-4 h-4 text-emerald-300" />
               <span>{isJudgeDemo ? 'Add Demo Instrument' : 'Register Instrument'}</span>
