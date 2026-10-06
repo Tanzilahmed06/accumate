@@ -6,10 +6,6 @@ interface SplashLoaderProps {
   onComplete: () => void;
 }
 
-/**
- * An accessible, one-time landing reveal. The dashboard is displayed when the
- * supplied video ends; users are never blocked if it is slow or unavailable.
- */
 export const SplashLoader: React.FC<SplashLoaderProps> = ({ onComplete }) => {
   const [isReady, setIsReady] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -24,55 +20,70 @@ export const SplashLoader: React.FC<SplashLoaderProps> = ({ onComplete }) => {
 
   return (
     <main
-      className="animate-fade-in relative grid min-h-screen place-items-center overflow-hidden bg-white px-6 text-center text-[#17324D]"
+      className="splash-screen animate-fade-in"
       aria-labelledby="splash-title"
     >
-      <div className="w-full max-w-md">
+      <div className="splash-backdrop" aria-hidden="true" />
+      <div className="splash-grid" aria-hidden="true" />
+
+      <div className="splash-content">
         <h1 id="splash-title" className="sr-only">Welcome to AccuMate</h1>
 
         {hasError ? (
-          <div className="flex flex-col items-center gap-5">
-            <BrandLogo className="h-32 w-52" />
-            <div className="flex items-center gap-2 text-sm text-slate-600" role="status">
-              <AlertCircle className="size-4 text-[#1558A6]" aria-hidden="true" />
+          <div className="splash-fallback" role="status">
+            <div className="brand-mark brand-mark-large">
+              <BrandLogo className="h-24 w-36 sm:h-28 sm:w-40" />
+            </div>
+            <div className="splash-status">
+              <AlertCircle className="size-4 text-[#8ec5ff]" aria-hidden="true" />
               <span>The AccuMate welcome animation could not load.</span>
             </div>
-            <button
-              type="button"
-              onClick={onComplete}
-              className="bg-[#1558A6] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#104986] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1558A6] focus-visible:ring-offset-2"
-            >
+            <button type="button" onClick={onComplete} className="splash-cta">
               Continue to AccuMate
             </button>
           </div>
         ) : (
-          <div className="relative">
+          <div className="splash-visual-wrap">
             {!isReady && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white" role="status" aria-live="polite">
-                <LoaderCircle className="size-7 animate-spin text-[#1558A6]" aria-hidden="true" />
-                <span className="text-sm font-medium text-slate-600">Preparing AccuMate…</span>
+              <div className="splash-loading" role="status" aria-live="polite">
+                <LoaderCircle className="size-7 animate-spin text-[#bfe7ff]" aria-hidden="true" />
+                <span>Preparing AccuMate…</span>
               </div>
             )}
-            <video
-              className={`mx-auto w-full max-w-md object-contain transition-opacity duration-500 ${isReady ? 'opacity-100' : 'opacity-0'}`}
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              onCanPlay={() => setIsReady(true)}
-              onEnded={onComplete}
-              onError={() => setHasError(true)}
-              aria-label="AccuMate animated logo reveal"
-            >
-              <source src="/assets/accumate-reveal.mp4" type="video/mp4" />
-              Your browser does not support the AccuMate welcome animation.
-            </video>
-            {isReady && (
-              <button
-                type="button"
-                onClick={onComplete}
-                className="mt-4 text-sm font-semibold text-[#1558A6] underline-offset-4 transition hover:text-[#104986] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1558A6] focus-visible:ring-offset-2"
+
+            <div className={`splash-visual ${isReady ? 'is-ready' : ''}`}>
+              <div className="brand-orbit" aria-hidden="true" />
+              <div className="brand-mark">
+                <BrandLogo className="h-20 w-28 sm:h-24 sm:w-32" />
+              </div>
+              <video
+                className="splash-video"
+                autoPlay
+                muted
+                playsInline
+                preload="auto"
+                onCanPlay={() => setIsReady(true)}
+                onEnded={onComplete}
+                onError={() => setHasError(true)}
+                aria-label="AccuMate animated logo reveal"
               >
+                <source src="/assets/accumate-reveal.mp4" type="video/mp4" />
+                Your browser does not support the AccuMate welcome animation.
+              </video>
+            </div>
+
+            <div className="splash-copy">
+              <div className="splash-kicker">AccuMate</div>
+              <h2>Every Measure, Verified.</h2>
+              <p>Digital legal metrology workflows designed for trust, clarity, and speed.</p>
+            </div>
+
+            <div className="splash-progress" aria-hidden="true">
+              <span className="progress-line" />
+            </div>
+
+            {isReady && (
+              <button type="button" onClick={onComplete} className="splash-skip">
                 Skip animation
               </button>
             )}
